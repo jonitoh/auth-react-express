@@ -1,5 +1,6 @@
 # root
 .DS_Store
+node_modules
 
 # client side
 client/node_modules

@@ -1,0 +1,28 @@
+{
+  "name": "auth-react-express",
+  "version": "1.0.0",
+  "description": "to change",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server:dev": "cd server && npm dev",
+    "client:dev": "cd client && npm dev",
+    "dev": "concurrently --kill-others \"npm run server:dev\" \"npm run client:dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonitoh/auth-react-express.git"
+  },
+  "author": "TOH Ninsemou Jordan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jonitoh/auth-react-express/issues"
+  },
+  "homepage": "https://github.com/jonitoh/auth-react-express#readme",
+  "dependencies": {
+    "concurrently": "^7.0.0"
+  }
+}

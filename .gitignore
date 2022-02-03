@@ -1,1 +1,8 @@
+# root
 .DS_Store
+
+# client side
+client/node_modules
+
+# server side
+server/node_modules

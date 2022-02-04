@@ -6,7 +6,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
-  <ChakraProvider>
+  <ChakraProvider resetCSS={true}>
     <React.StrictMode>
       <App />
     </React.StrictMode>

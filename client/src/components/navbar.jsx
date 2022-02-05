@@ -51,7 +51,7 @@ const Navbar = (props) => {
         >
           <MenuItems to="/">Home</MenuItems>
           <MenuItems to="/settings">Settings</MenuItems>
-          <MenuItems to="/login">Log In</MenuItems>
+          <MenuItems to="/signup">Sign Up</MenuItems>
           <Button
             size="sm"
             rounded="md"

@@ -1,12 +1,11 @@
 import React, { useState } from "react";
+import { Navigate } from "react-router-dom";
 import {
   Flex,
   Box,
   Divider,
   Heading,
-  Text,
   Button,
-  Checkbox,
   FormControl,
   FormLabel,
   FormHelperText,
@@ -18,47 +17,49 @@ import {
   //BeatLoader,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import ErrorMessage from "./error-message";
-import { userLogin } from "../services/api";
+import FormMessage from "./form-message";
+import { signUp } from "../services/api";
 
-const Form = () => {
-  // login with credentials
+const SignUpForm = () => {
+  // info for signing up
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const handlePasswordVisibility = () => setShowPassword(!showPassword);
-
-  // login with product-key
   const [productKey, setProductKey] = useState("");
   const [showProductKey, setShowProductKey] = useState(false);
   const handleProductKeyVisibility = () => setShowProductKey(!showProductKey);
 
   // manage login process
   const [isLoading, setIsLoading] = useState(false);
-  const [onCredentials, setOnCredentials] = useState(true);
-  const handleUserLoginChoice = () => setOnCredentials(!onCredentials);
-  const isOnCredentialsInvalid =
-    onCredentials && (password === "" || email === "");
-  const isProductKeyInvalid = !onCredentials && productKey === "";
-  const isInvalid = isOnCredentialsInvalid || isProductKeyInvalid;
-  const [errors, setErrors] = useState("");
+  const isInvalid = password === "" || email === "" || productKey === "";
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [isSignIn, setIsSignIn] = useState(false);
 
   const handleSignIn = async (event) => {
     event.preventDefault();
-    setErrors("");
+    setErrorMsg("");
+    setSuccessMsg("");
     setIsLoading(true);
-    console.log(
-      `type of login: ${onCredentials ? "credentials" : "product key"}`
-    );
     // if it works then send it to the backend
     try {
-      await userLogin({ email, password, productKey, onCredentials });
+      await signUp({ email, password, productKey });
+      setSuccessMsg(
+        "Successful registration! You'll be redirect to the home page in afew seconds."
+      );
+      setIsLoading(false);
+      setEmail("");
+      setPassword("");
+      setShowPassword(false);
+      setProductKey("");
+      setShowProductKey(false);
+      setTimeout(() => {
+        setIsSignIn(true);
+      }, 5000);
     } catch (error) {
       console.log("following error", error);
-      setErrors(
-        onCredentials ? "Invalid email or password" : "Invalid product key"
-      );
-    } finally {
+      setErrorMsg("Something went wrong!");
       setIsLoading(false);
       setEmail("");
       setPassword("");
@@ -68,6 +69,7 @@ const Form = () => {
     }
   };
 
+  if (isSignIn) return <Navigate to="/" />;
   return (
     <Flex width="full" align="center" justifyContent="center">
       <Box
@@ -78,18 +80,15 @@ const Form = () => {
         boxShadow="lg"
       >
         <Box textAlign="center">
-          <Heading>Login to your account</Heading>
+          <Heading>Sign Up</Heading>
         </Box>
         <Box my={4} textAlign="left">
           <form method="POST" onSubmit={handleSignIn}>
-            {errors && <ErrorMessage message={errors} />}
-            <Checkbox
-              isChecked={onCredentials}
-              onChange={handleUserLoginChoice}
-            >
-              <Text textAlign="center">Sign in with your credentials</Text>
-            </Checkbox>
-            <FormControl isRequired isDisabled={!onCredentials}>
+            {errorMsg && <FormMessage status="error" message={errorMsg} />}
+            {successMsg && (
+              <FormMessage status="success" message={successMsg} />
+            )}
+            <FormControl isRequired>
               <FormLabel htmlFor="email">Email address</FormLabel>
               <Input
                 id="email"
@@ -102,7 +101,7 @@ const Form = () => {
                 Enter the email you signed up with.
               </FormHelperText>
             </FormControl>
-            <FormControl isRequired isDisabled={!onCredentials}>
+            <FormControl isRequired>
               <FormLabel htmlFor="password">Password</FormLabel>
               <InputGroup>
                 <Input
@@ -123,14 +122,7 @@ const Form = () => {
               </InputGroup>
               <FormHelperText>Enter your password.</FormHelperText>
             </FormControl>
-            <Divider mt={4} mb={2} border="2px" />
-            <Checkbox
-              isChecked={!onCredentials}
-              onChange={handleUserLoginChoice}
-            >
-              <Text textAlign="center">Sign in with your product key</Text>
-            </Checkbox>
-            <FormControl isRequired isDisabled={onCredentials}>
+            <FormControl isRequired>
               <FormLabel htmlFor="product-key">Product Key</FormLabel>
               <InputGroup>
                 <Input
@@ -172,4 +164,4 @@ const Form = () => {
   );
 };
 
-export default Form;
+export default SignUpForm;

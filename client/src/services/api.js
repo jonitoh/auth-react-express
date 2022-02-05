@@ -27,4 +27,16 @@ const userLogin = async ({ email, password, productKey, onCredentials }) =>
     ? await userLoginWithCredentials({ email, password })
     : await userLoginWithProductKey({ productKey });
 
-export { userLogin };
+const signUp = async ({ email, password, productKey }) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (email === "" || password === "" || productKey === "") {
+        reject();
+      } else {
+        resolve();
+      }
+    }, 3000);
+  });
+};
+
+export { userLogin, signUp };

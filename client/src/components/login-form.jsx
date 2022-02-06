@@ -21,7 +21,7 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import FormMessage from "./form-message";
-import { userLogin } from "../services/api";
+import { AuthService } from "../services/api";
 
 const LogInForm = () => {
   // login with credentials
@@ -54,7 +54,7 @@ const LogInForm = () => {
     );
     // if it works then send it to the backend
     try {
-      await userLogin({ email, password, productKey, onCredentials });
+      await AuthService.login({ email, password, productKey, onCredentials });
     } catch (error) {
       console.log("following error", error);
       setErrors(

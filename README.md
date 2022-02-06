@@ -183,6 +183,12 @@ This project is released under the terms of the [MIT License](LICENSE).
 - [Chakra UI](https://chakra-ui.com/)
 - [How to create forms with Chakra UI in React apps](https://blog.logrocket.com/how-to-create-forms-with-chakra-ui-in-react-apps/): very detailed article
 
+- [jsconfig.json usage](https://saurabhshah23.medium.com/react-app-with-absolute-paths-using-jsconfig-json-2b07b1cb24d4)
+
+- [Express with example] (https://www.freecodecamp.org/news/express-explained-with-examples-installation-routing-middleware-and-more/)
+
+- [auth mongo express] (https://www.bezkoder.com/node-js-mongodb-auth-jwt/)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

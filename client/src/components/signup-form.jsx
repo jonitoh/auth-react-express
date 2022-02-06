@@ -18,7 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import FormMessage from "./form-message";
-import { signUp } from "../services/api";
+import { AuthService } from "../services/api";
 
 const SignUpForm = () => {
   // info for signing up
@@ -44,7 +44,7 @@ const SignUpForm = () => {
     setIsLoading(true);
     // if it works then send it to the backend
     try {
-      await signUp({ email, password, productKey });
+      await AuthService.register({ email, password, productKey });
       setSuccessMsg(
         "Successful registration! You'll be redirect to the home page in afew seconds."
       );

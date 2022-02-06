@@ -1,12 +1,21 @@
 const express = require("express");
-const router = express.Router();
 
-const authRouter = require("./auth.route");
-const productKeyRouter = require("./product-key.route");
-const userRouter = require("./user.route");
+const getRoutes = () => {
+  // Initiate express router
+  const router = express.Router();
 
-router.use("/auth", authRouter);
-router.use("/users", userRouter);
-router.use("/product-key", productKeyRouter);
+  // Implement routes
+  // --> routes for authorisation
+  const { getRouter: getAuthRouter } = require("./auth.route");
+  router.use("/auth", getAuthRouter());
+  // --> routes for product Key management
+  const { getRouter: getProductKeyRouter } = require("./product-key.route");
+  router.use("/product-key", getProductKeyRouter());
+  // --> routes for user management
+  const { getRouter: getUserRouter } = require("./user.route");
+  router.use("/user", getUserRouter());
 
-module.exports = router;
+  return router;
+};
+
+module.exports = { getRoutes };

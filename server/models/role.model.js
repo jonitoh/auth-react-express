@@ -7,6 +7,7 @@ const Role = model(
       type: String,
       required: true,
       default: "user",
+      unique: true,
     },
   })
 );

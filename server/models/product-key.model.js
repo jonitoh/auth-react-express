@@ -7,6 +7,7 @@ const ProductKey = model(
       key: {
         type: String,
         required: true,
+        unique: true,
       },
 
       activationDate: {
@@ -21,7 +22,7 @@ const ProductKey = model(
         default: true,
       },
 
-      validatyPeriod: {
+      validityPeriod: {
         type: Number,
         required: true,
         default: 60 * 60, // in seconds

@@ -54,62 +54,16 @@ const startServer = (port = process.env.PORT || 4000) => {
   const initiateRolesinDB = () => {
     db.Role.estimatedDocumentCount((err, count) => {
       if (!err && count === 0) {
-        db.ROLES.forEach((name) => {
+        for (let i = 0; i < db.ROLES.length; i++) {
+          const name = db.ROLES[i];
           const role = new db.Role({
             name: name,
           });
-          role.save((err) => {
-            if (err) {
-              console.log("error", err);
-            }
-            console.log(`added '${name}' to roles collection`);
+          role.save((err, savedRole) => {
+            if (err) console.log(err);
+            console.log(`added '${savedRole.name}' to roles collection`);
           });
-        });
-      }
-    });
-  };
-
-  const __addSuperAdminProductKeyInDB = () => {
-    const key = process.env.SUPER_ADMIN_PRODUCT_KEY || undefined;
-    const productKey = new db.ProductKey({
-      key: key,
-      activationDate: new Date(),
-      activated: true,
-      validityPeriod: 1 * 30 * 24 * 60 * 60, // in seconds aka 1 month
-    });
-    productKey.save((err, savedProductKey) => {
-      console.log("saved one", savedProductKey);
-      // errors
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-      // It should not have the same Product Key stored
-      if (key) {
-        db.ProductKey.findOne(
-          {
-            key: key,
-          },
-          (err, foundProductKey) => {
-            console.log("found one", foundProductKey);
-            if (err) {
-              // a new Product Key
-              console.log(
-                "Super admin product Key was created and registered successfully!"
-              );
-            }
-            // oops ! existing Product Key
-            console.log(
-              `Super admin product key has already been added and activated since ${foundProductKey.activationDate}.`
-            );
-            db.ProductKey.deleteOne({ _id: savedProductKey._id }, (err) => {
-              if (err) console.log(err);
-              console.log("No need to add the super admin product key then");
-            });
-          }
-        );
-      } else {
-        console.log("ProductKey missing");
+        }
       }
     });
   };
@@ -161,11 +115,6 @@ const startServer = (port = process.env.PORT || 4000) => {
         }
       }
     );
-
-    /*
-    
-
-    */
   };
 
   const __generateRolesMap = async () => {
@@ -178,22 +127,113 @@ const startServer = (port = process.env.PORT || 4000) => {
     return rolesMap;
   };
 
-  const generateRolesMap = () => {
+  const generateRolesMap = async () => {
     console.log("generateRolesMap -- start");
-    const rolesMap = db.Role.find({}, (err, result) => {
-      console.log("do something");
-      if (err) console.log(err);
-      console.log("result", result);
-      const _rolesMap = result.map(({ _id, name }) => ({ _id, name }));
-      console.log("Available roles", _rolesMap);
-      return _rolesMap;
-    });
-    console.log("generateRolesMap -- finish");
+    const rolesMap = await db.Role.find(
+      {},
+      { _id: 1, name: 1 },
+      (err, result) => {
+        if (err) console.log(err);
+        console.log("generateRolesMap -- in find", result);
+      }
+    ); /*.exec((err, result) => {
+      if (err) return console.log(err);
+      console.log("generateRolesMap -- in exec", result);
+      return result;
+    });*/
+    console.log("generateRolesMap -- finish", rolesMap);
     return rolesMap;
   };
 
+  const _initiateRolesinDB = (db) => {
+    db.Role.estimatedDocumentCount((err, count) => {
+      if (!err && count === 0) {
+        for (let i = 0; i < db.ROLES.length; i++) {
+          const name = db.ROLES[i];
+          const role = new db.Role({
+            name: name,
+          });
+          role.save((err, savedRole) => {
+            if (err) console.log(err);
+            console.log(`added '${savedRole.name}' to roles collection`);
+          });
+        }
+      }
+    });
+  };
+
   // db connection
-  db.mongoose
+  const connection = db.mongoose.createConnection(dbConfig.URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    //useFindAndModify: true,
+    family: 4, // Use IPv4, skip trying IPv6
+    maxPoolSize: 5,
+  });
+  /*
+    .asPromise()
+    .then((dbase) => {
+      console.log("what is this?", dbase.models);
+      //initiateRolesinDB();
+      console.log("well");
+    })*/
+  /*
+    .then(() => {
+      // ready to use. The `mongoose.connect()` promise resolves to mongoose instance.
+      console.log("Successfully connect to MongoDB.");
+      initiateRolesinDB();
+      console.log("Successfully initiate roles.");
+      addSuperAdminProductKeyInDB();
+      console.log("Successfully add super admin product key.");
+
+      // Populate database in development if necessary
+      if (process.env.NODE_ENV && process.env.NODE_ENV === "development") {
+        console.log("generate data -- start");
+        const { generateData } = require("./data/generate-data");
+        const rolesMap = generateRolesMap().then((value) => value);
+        console.log("gen data rolesMap", rolesMap);
+        generateData(db, process.env.DATA_GENERATION_METHOD || "json", {
+          rolesMap: rolesMap,
+          coerceRole: true, //false,
+          outputDir: "",
+        });
+        console.log("generate data -- finish");
+      }
+    })*/
+  /*
+    .catch((err) => {
+      console.error("Connection error", err);
+      process.exit();
+    });*/
+
+  console.log("readyState", connection.readyState);
+
+  /*
+  // Populate database in development if necessary
+  if (process.env.NODE_ENV && process.env.NODE_ENV === "development") {
+    console.log("generate data -- start");
+    const { generateData } = require("./data/generate-data");
+    const rolesMap = generateRolesMap();
+    console.log("gen data rolesMap", rolesMap);
+    generateData(db, process.env.DATA_GENERATION_METHOD || "json", {
+      rolesMap: rolesMap,
+      coerceRole: true, //false,
+      outputDir: "",
+    });
+    console.log("generate data -- finish");
+  }*/
+
+  //const connection = db.mongoose.Connection;
+
+  /*  connection.on("open", () => {
+    console.log("Database opened");
+  });
+
+  connection.on("close", () => {
+    console.log("Database closed");
+  });
+  /*
+      db.mongoose
     .connect(dbConfig.URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -226,6 +266,7 @@ const startServer = (port = process.env.PORT || 4000) => {
       console.error("Connection error", err);
       process.exit();
     });
+    */
 
   // for development and avoid CORS stuff
   if (process.env.NODE_ENV && process.env.NODE_ENV !== "development") {

@@ -51,17 +51,18 @@ const startServer = (port = process.env.PORT || 4000) => {
   const db = require("./models");
   console.log("check readyState", db.conn.readyState);
 
-  // Populate database in development if necessary
-  if (process.env.NODE_ENV && process.env.NODE_ENV === "development") {
+  // Populate database if necessary
+  const populateDatabase = (process.env.NODE_ENV && process.env.NODE_ENV === "development") || (process.env.POPULATE_DB)
+  if (populateDatabase) {
     // main function
     console.log("generate data -- start");
     //const method = process.env.DATA_GENERATION_METHOD || "json";
     /* -- raw method -- *
     const method = "raw",
     const options = {
-      roleInput:  "./../data/raw/roles.json",
-      productKeyInput: "./../data/raw/product-keys.json",
-      userInput: "./../data/raw/users.json",
+      roleInput:  process.env.DB_GENERATION_OPTIONS_ROLE || "./../data/raw/roles.json",
+      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./../data/raw/product-keys.json",
+      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./../data/raw/users.json",
       coerceRole: false,
       dumpData: false,
       outputDir: "./../temp",
@@ -69,9 +70,9 @@ const startServer = (port = process.env.PORT || 4000) => {
     /* -- json method -- /
     const method = "json",
     const options = {
-      roleInput: "./../data/json/roles.json",
-      productKeyInput: "./../data/json/product-keys.json",
-      userInput: "./../data/json/users.json",
+      roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./../data/json/roles.json",
+      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./../data/json/product-keys.json",
+      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./../data/json/users.json",
       coerceRole: true,
       dumpData: false,
       outputDir: "./../temp",
@@ -79,14 +80,16 @@ const startServer = (port = process.env.PORT || 4000) => {
     /* -- random method -- */
       const method = "random",
       const options = {
-        roleInput: "./../data/random/roles.json",
-        productKeyInput: "./../data/random/product-keys.json",
-        userInput: "./../data/random/users.json",//{ numberOfKeysUnused: 3 }
+        roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./../data/random/roles.json",
+        productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./../data/random/product-keys.json",
+        userInput: process.env.DB_GENERATION_OPTIONS_USER || "./../data/random/users.json",//{ numberOfKeysUnused: 3 }
         coerceRole: false,
         dumpData: true,
         outputDir: "./../temp",
     }
-    db.initDatabase(method, options);
+    console.log("chosen method", method);
+    console.log("chosen options", options);
+    //db.initDatabase(method, options);
   }
 
   // for development and avoid CORS stuff

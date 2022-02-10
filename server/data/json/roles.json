@@ -1,0 +1,5 @@
+[
+  { "name": "user", "isDefault": true },
+  { "name": "admin" },
+  { "name": "moderator" }
+]

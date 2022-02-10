@@ -1,0 +1,28 @@
+[
+  {
+    "key": "fake-key-0000001",
+    "activated": false,
+    "validityPeriod": 10000
+  },
+  {
+    "key": "fake-key-0000002",
+    "activationDate": "2022-01-10T15:12:15.639Z",
+    "activated": false,
+    "validityPeriod": 6000
+  },
+  {
+    "key": "fake-key-0000003",
+    "activationDate": "2022-02-10T10:12:15.639Z"
+  },
+  {
+    "key": "fake-key-0000004",
+    "activationDate": "2022-02-09T15:12:15.639Z",
+    "activated": false,
+    "validityPeriod": 100000
+  },
+  {
+    "key": "fake-key-0000005",
+    "activated": false,
+    "validityPeriod": 100000
+  }
+]

@@ -1,279 +1,108 @@
-/*const config = require("../config/auth.config");
-const db = require("../models");
-const { user: User, role: Role } = db;
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const ProductKey = require("../models/product-key.model");
+const { User, Role, ProductKey } = require("../models");
 
-// delete user
-// modify user
-// get info from us
-// get info from any user
-// get userstats
-// get moderator stats
-// get admin stats
-
-const signup = (req, res) => {
-  const { username, email, password, productKey, roles } = req.body;
-  const user = new User({
-    username,
-    email,
-    password: bcrypt.hashSync(password, 8),
+const deleteUser = (req, res) => {
+  User.findOneAndDelete({ _id: req.body.id }, (err) => {
+    if (err) res.status(500).send({ message: err });
+    console.log("Successful deletion of a user");
+    res.status(200);
   });
-  user.save((err, user) => {
-    // errors
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
+};
+
+const getInfo = (req, res) => {
+  const user = User.findOne({ _id: req.body.id }, (err, user) => {
+    if (err) res.status(500).send({ message: err });
+  });
+  res.status(200).send({
+    user: user,
+  });
+};
+
+const getAllInfo = (req, res) => {
+  const users = User.find({}, (err, users) => {
+    if (err) console.log(err);
+    console.log(`${users.length} user info found`);
+  });
+  res.status(200).send({
+    users: users,
+  });
+};
+
+const modifyUser = (req, res) => {
+  const { id, username, email, password, productKey, roles } = req.body;
+  const update = { username, email };
+  User.findOneAndUpdate({ _id: id }, update, null, (err, updatedUser) => {
+    if (err) console.log(err);
+    // update password
+    if (password) {
+      const isSamePassword = updatedUser.checkPassword(password);
+      if (isSamePassword) {
+        console.log("it's the same password");
+      } else {
+        updatedUser.password = User.hashPassword(password);
+      }
     }
-    // Product Key
+
+    // update product key
     if (productKey) {
-      ProductKey.findOne(
-        {
-          key: productKey,
-        },
-        (err, foundProductKey) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
-          }
-          user.productKey = foundProductKey._id;
-          user.save((err) => {
-            if (err) {
-              res.status(500).send({ message: err });
-              return;
-            }
-            // Roles
-            if (roles) {
-              Role.find(
-                {
-                  name: { $in: roles },
-                },
-                (err, foundRoles) => {
-                  if (err) {
-                    res.status(500).send({ message: err });
-                    return;
-                  }
-                  user.roles = foundRoles.map((role) => role._id);
-                  user.save((err) => {
-                    if (err) {
-                      res.status(500).send({ message: err });
-                      return;
-                    }
-                    // Everything went well
-                    res.send({ message: "User was registered successfully!" });
-                  });
-                }
-              );
-            } else {
-              // Role by default
-              Role.findOne({ name: "user" }, (err, foundRole) => {
-                if (err) {
-                  res.status(500).send({ message: err });
-                  return;
-                }
-                user.roles = [foundRole._id];
-                user.save((err) => {
-                  if (err) {
-                    res.status(500).send({ message: err });
-                    return;
-                  }
-                  // Everything went well
-                  res.send({ message: "User was registered successfully!" });
-                });
-              });
-            }
-          });
-        }
-      );
-    } else {
-      res.status(500).send({ message: "ProductKey missing" });
-      return;
+      const { isDuplicated, duplicateProductKey, errors } =
+        ProductKey.checkDuplicate(productKey);
+      if (errors) console.log(errors);
+      if (!isDuplicated) {
+        res.status(500).send({ message: "Unknown product key" });
+      } else {
+        updatedUser.productKey = duplicateProductKey._id;
+      }
     }
-    //
-    if (req.body.roles) {
-      Role.find(
-        {
-          name: { $in: req.body.roles },
-        },
-        (err, roles) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
+
+    // update roles
+    if (roles) {
+      const allRoles = Role.allRoles();
+      const lastRoles = updatedUser.roles;
+      //const errorMsgs = [];
+      for (let index = 0; index < roles.length; index++) {
+        // role as a name
+        const role = roles[index];
+        // role exists ?
+        const foundRole = allRoles.find(({ name }) => role === name);
+        if (foundRole) {
+          if (lastRoles.includes(foundRole._id)) {
+            lastRoles.push(foundRole._id);
           }
-          user.roles = roles.map((role) => role._id);
-          user.save((err) => {
-            if (err) {
-              res.status(500).send({ message: err });
-              return;
-            }
-            res.send({ message: "User was registered successfully!" });
-          });
+        } else {
+          console.push(`The following role is not present: ${role}.`);
         }
-      );
-    } else {
-      Role.findOne({ name: "user" }, (err, role) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-        user.roles = [role._id];
-        user.save((err) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
-          }
-          res.send({ message: "User was registered successfully!" });
-        });
-      });
+      }
+      updatedUser.roles = lastRoles;
     }
+
+    res.status(200);
   });
 };
 
-const signinWithEmail = (req, res) => {
-  const { email, password } = req.body;
-  User.findOne({
-    email: email,
-  })
-    .populate("roles", "-__v")
-    .exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-      if (!user) {
-        return res.status(404).send({ message: "User Not found." });
-      }
-      // check password
-      const passwordIsValid = bcrypt.compareSync(password, user.password);
-      if (!passwordIsValid) {
-        return res.status(401).send({
-          accessToken: null,
-          message: "Invalid Password!",
-        });
-      }
-      // retrieve token
-      const token = jwt.sign({ id: user.id }, config.SECRET, {
-        expiresIn: 86400, // 24 hours
-      });
-      const authorities = [];
-      for (let i = 0; i < user.roles.length; i++) {
-        authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
-      }
-      res.status(200).send({
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        roles: authorities,
-        accessToken: token,
-      });
-    });
-};
-
-const signinWithProductKey = (req, res) => {
-  ProductKey.findOne(
-    {
-      key: req.body.productKey,
-    },
-    (err, productKey) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-      User.findOne({
-        productKey: productKey.key,
-      })
-        .populate("roles", "-__v")
-        .exec((err, user) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
-          }
-          if (!user) {
-            return res.status(404).send({ message: "User Not found." });
-          }
-
-          const token = jwt.sign({ id: user.id }, config.secret, {
-            expiresIn: 86400, // 24 hours
-          });
-          const authorities = [];
-          for (let i = 0; i < user.roles.length; i++) {
-            authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
-          }
-          res.status(200).send({
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            roles: authorities,
-            accessToken: token,
-          });
-        });
-    }
-  );
-};
-
-const generateProductKey = (req, res) => {
-  const { key, activationDate, activated, validityPeriod } = req.body;
-  const productKey = new ProductKey({
-    key,
-    activationDate,
-    activated,
-    validityPeriod,
-  });
-  productKey.save((err, productKey) => {
-    // errors
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
-    // It should not have the same Product Key stored
-    if (key) {
-      ProductKey.findOne(
-        {
-          key: key,
-        },
-        (err, foundProductKey) => {
-          if (err) {
-            // a new Product Key
-            res.status(200).send({
-              productKey: productKey.key,
-              message: "Product Key was created and registered successfully!",
-            });
-            return;
-          }
-          // oops ! existing Product Key
-          res.status(500).send({
-            message: `This ProductKey already exist and it has been activated since ${foundProductKey.activationDate}.`,
-          });
-          return;
-        }
-      );
-    } else {
-      res.status(500).send({ message: "ProductKey missing" });
-      return;
-    }
-  });
-};
-*/
-const allAccess = (req, res) => {
+/* --- Fake stuff --- */
+const getAllAccess = (req, res) => {
   res.status(200).send("Public Content.");
 };
 
-const userBoard = (req, res) => {
+const getUserStats = (req, res) => {
   res.status(200).send("User Content.");
 };
 
-const adminBoard = (req, res) => {
+const getAdminStats = (req, res) => {
   res.status(200).send("Admin Content.");
 };
 
-const moderatorBoard = (req, res) => {
+const getModeratorStats = (req, res) => {
   res.status(200).send("Moderator Content.");
 };
 
 module.exports = {
-  allAccess,
-  userBoard,
-  adminBoard,
-  moderatorBoard,
+  deleteUser,
+  getInfo,
+  getAllInfo,
+  modifyUser,
+  getAllAccess,
+  getUserStats,
+  getAdminStats,
+  getModeratorStats,
 };

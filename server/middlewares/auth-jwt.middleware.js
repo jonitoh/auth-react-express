@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/auth.config.js");
-const db = require("../models");
-const { user: User, role: Role } = db;
+const { User, Role } = require("../models");
 
 verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"];
@@ -17,61 +16,32 @@ verifyToken = (req, res, next) => {
   });
 };
 
-isAdmin = (req, res, next) => {
+hasRole = (role, req, res, next) => {
+  // check if the role exists
+  const verifiedRole = Role.findByName(role);
+  if (verifiedRole) {
+    res.status(500).send({ message: `${role} does not exist.` });
+    return;
+  }
+
   User.findById(req.userId).exec((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
     }
-    Role.find(
-      {
-        _id: { $in: user.roles },
-      },
-      (err, roles) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-        for (let i = 0; i < roles.length; i++) {
-          if (roles[i].name === "admin") {
-            next();
-            return;
-          }
-        }
-        res.status(403).send({ message: "Require Admin Role!" });
-        return;
-      }
-    );
+    if (user.roles.includes(verifiedRole._id)) {
+      next();
+      return;
+    } else {
+      res.status(403).send({ message: `Require ${role.toUpperCase()} Role!` });
+      return;
+    }
   });
 };
 
-isModerator = (req, res, next) => {
-  User.findById(req.userId).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
-    Role.find(
-      {
-        _id: { $in: user.roles },
-      },
-      (err, roles) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-        for (let i = 0; i < roles.length; i++) {
-          if (roles[i].name === "moderator") {
-            next();
-            return;
-          }
-        }
-        res.status(403).send({ message: "Require Moderator Role!" });
-        return;
-      }
-    );
-  });
-};
+isAdmin = (req, res, next) => hasRole("admin", req, res, next);
+
+isModerator = (req, res, next) => hasRole("moderator", req, res, next);
 
 module.exports = {
   verifyToken,

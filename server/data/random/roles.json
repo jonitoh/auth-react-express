@@ -1,0 +1,4 @@
+{
+  "roles": ["user", "admin", "moderator"],
+  "defaultRoleName": "user"
+}

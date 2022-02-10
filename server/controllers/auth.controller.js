@@ -1,16 +1,13 @@
 const config = require("../config/auth.config");
-const db = require("../models");
-const { user: User, role: Role } = db;
+const { User, Role, ProductKey } = require("../models");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const ProductKey = require("../models/product-key.model");
 
 const signup = (req, res) => {
   const { username, email, password, productKey, roles } = req.body;
   const user = new User({
     username,
     email,
-    password: bcrypt.hashSync(password, 8),
+    password: User.hashPassword(password),
   });
   user.save((err, user) => {
     // errors
@@ -30,103 +27,59 @@ const signup = (req, res) => {
             return;
           }
           user.productKey = foundProductKey._id;
-          user.save((err) => {
-            if (err) {
-              res.status(500).send({ message: err });
-              return;
-            }
-            // Roles
-            if (roles) {
-              Role.find(
-                {
-                  name: { $in: roles },
-                },
-                (err, foundRoles) => {
-                  if (err) {
-                    res.status(500).send({ message: err });
-                    return;
-                  }
-                  user.roles = foundRoles.map((role) => role._id);
-                  user.save((err) => {
-                    if (err) {
-                      res.status(500).send({ message: err });
-                      return;
-                    }
-                    // Everything went well
-                    res.send({ message: "User was registered successfully!" });
-                  });
-                }
-              );
-            } else {
-              // Role by default
-              Role.findOne({ name: "user" }, (err, foundRole) => {
-                if (err) {
-                  res.status(500).send({ message: err });
-                  return;
-                }
-                user.roles = [foundRole._id];
-                user.save((err) => {
-                  if (err) {
-                    res.status(500).send({ message: err });
-                    return;
-                  }
-                  // Everything went well
-                  res.send({ message: "User was registered successfully!" });
-                });
-              });
-            }
-          });
         }
       );
     } else {
-      res.status(500).send({ message: "ProductKey missing" });
+      res.status(500).send({ message: "product key missing" });
       return;
     }
-    //
-    if (req.body.roles) {
-      Role.find(
-        {
-          name: { $in: req.body.roles },
-        },
-        (err, roles) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
+    // Roles
+    if (roles) {
+      const allRoles = Role.allRoles();
+      const mappedRoles = [];
+      const errorMsgs = [];
+      for (let index = 0; index < roles.length; index++) {
+        // role as a name
+        const role = roles[index];
+        // role exists ?
+        const foundRole = allRoles.find(({ name }) => role === name);
+        if (foundRole) {
+          if (mappedRoles.includes(foundRole._id)) {
+            mappedRoles.push(foundRole._id);
           }
-          user.roles = roles.map((role) => role._id);
-          user.save((err) => {
-            if (err) {
-              res.status(500).send({ message: err });
-              return;
-            }
-            res.send({ message: "User was registered successfully!" });
-          });
+        } else {
+          errorMsgs.push(`The following role is not present: ${role}.`);
         }
-      );
+      }
+      if (mappedRoles.length === 0) {
+        if (req.body.forceRole) {
+          user.roles = [
+            allRoles.find(({ name }) => name === Role.defaultRole)._id,
+          ];
+          console.log("No given role. Set to default.");
+        } else {
+          res.status(500).send({ message: errorMsgs.join(" || ") });
+        }
+      } else {
+        user.roles = mappedRoles;
+        res.send({ message: "User was registered successfully!" });
+      }
     } else {
-      Role.findOne({ name: "user" }, (err, role) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-        user.roles = [role._id];
-        user.save((err) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
-          }
-          res.send({ message: "User was registered successfully!" });
-        });
-      });
+      if (req.body.forceRole) {
+        user.roles = [
+          allRoles.find(({ name }) => name === Role.defaultRole)._id,
+        ];
+        res.status(200).send({ message: "No given role. Set to default." });
+      } else {
+        res.status(500).send({ message: "No given role" });
+      }
     }
   });
 };
 
 const signinWithEmail = (req, res) => {
   const { email, password } = req.body;
-  User.findOne({
-    email: email,
-  })
+  User.findByEmail(email)
     .populate("roles", "-__v")
     .exec((err, user) => {
       if (err) {
@@ -136,9 +89,9 @@ const signinWithEmail = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: "User Not found." });
       }
-      // check password
-      const passwordIsValid = bcrypt.compareSync(password, user.password);
-      if (!passwordIsValid) {
+      // check password -- TODO
+      const isValidPassword = user.checkPassword(password);
+      if (!isValidPassword) {
         return res.status(401).send({
           accessToken: null,
           message: "Invalid Password!",
@@ -185,7 +138,7 @@ const signinWithProductKey = (req, res) => {
             return res.status(404).send({ message: "User Not found." });
           }
 
-          const token = jwt.sign({ id: user.id }, config.secret, {
+          const token = jwt.sign({ id: user.id }, config.SECRET, {
             expiresIn: 86400, // 24 hours
           });
           const authorities = [];

@@ -1,20 +1,8 @@
-const db = require("../models");
-const { ROLES, user: User } = db;
+const { Role, User } = require("../models");
 
 checkDuplicateUsernameOrEmail = (req, res, next) => {
-  // Username
-  User.findOne({
-    username: req.body.username,
-  }).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
-    if (user) {
-      res.status(400).send({ message: "Failed! Username is already in use!" });
-      return;
-    }
-    // Email
+  if (req.body.email) {
+    // check email
     User.findOne({
       email: req.body.email,
     }).exec((err, user) => {
@@ -26,14 +14,57 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
         res.status(400).send({ message: "Failed! Email is already in use!" });
         return;
       }
-      next();
     });
-  });
+  } else if (req.body.username) {
+    // check username
+    User.findOne({
+      username: req.body.username,
+    }).exec((err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      if (user) {
+        res
+          .status(400)
+          .send({ message: "Failed! Username is already in use!" });
+        return;
+      }
+    });
+  } else {
+    // we have a problem
+    res.status(500).send({
+      message:
+        "We can't check for duplicate user registration without username or email",
+    });
+    return;
+  }
+
+  // go back to business
+  next();
 };
 
 checkDuplicateProductKey = (req, res, next) => {
+  // check if the key is already here
+  const { isDuplicated, duplicateProductKey, errors } =
+    ProductKey.checkDuplicate(req.body.productKey);
+
+  // show potential errors
+  if (errors) {
+    res.status(500).send({ message: errors });
+    return;
+  }
+
+  // check if the key is already stored
+  if (!isDuplicated) {
+    res.status(500).send({
+      message: `Unknown product key`,
+    });
+    return;
+  }
+
   User.findOne({
-    username: req.body.productKey,
+    productKey: duplicateProductKey._id,
   }).exec((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
@@ -51,8 +82,9 @@ checkDuplicateProductKey = (req, res, next) => {
 
 checkRolesExisted = (req, res, next) => {
   if (req.body.roles) {
+    const allRoles = Role.allRoles().map(({ name }) => name);
     for (let i = 0; i < req.body.roles.length; i++) {
-      if (!ROLES.includes(req.body.roles[i])) {
+      if (!allRoles.includes(req.body.roles[i])) {
         res.status(400).send({
           message: `Failed! Role ${req.body.roles[i]} does not exist!`,
         });

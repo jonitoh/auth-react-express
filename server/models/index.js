@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
+const { getDatabaseConnection } = require("./main.model");
 
-mongoose.Promise = global.Promise;
+let db = {};
+try {
+  db = getDatabaseConnection();
+} catch (error) {
+  console.error("Database connection error", error);
+  process.exit();
+}
 
-module.exports = {
-  mongoose: mongoose,
-  User: require("./user.model"),
-  ProductKey: require("./product-key.model"),
-  Role: require("./role.model"),
-  ROLES: ["user", "admin", "moderator"],
-};
+module.exports = { db };

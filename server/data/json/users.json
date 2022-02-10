@@ -1,0 +1,28 @@
+[
+  {
+    "username": "Darcy.Wins.94500",
+    "email": "darcy.wincher@test.com",
+    "password": "weak-password",
+    "productKey": "fake-key-0000005",
+    "roles": ["user", "moderator", "admin"]
+  },
+  {
+    "username": "Han the best",
+    "email": "han77@test.com",
+    "password": "faible-mot-de-passe",
+    "productKey": "fake-key-0000004",
+    "roles": ["user"]
+  },
+  {
+    "email": "no-username@test.com",
+    "password": "weak-passw0rd",
+    "productKey": "fake-key-0000003",
+    "roles": ["user", "moderator"]
+  },
+  {
+    "email": "lame-email@test.com",
+    "password": "weak-passw0rd*",
+    "productKey": "fake-key-0000001",
+    "roles": []
+  }
+]

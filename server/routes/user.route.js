@@ -15,20 +15,48 @@ const getRouter = () => {
     next();
   });
 
-  router.get("/", controller.allAccess);
+  router.get(
+    "/info/:userId",
+    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    controller.getInfo
+  );
 
-  router.get("/user", [authJwt.verifyToken], controller.userBoard);
+  router.get(
+    "/info",
+    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    controller.getAllInfo
+  );
+
+  router.get("/", controller.getAllAccess);
+
+  router.get(
+    "/user",
+    [authJwt.verifyToken, authJwt.hasRole("user")],
+    controller.getUserStats
+  );
+
+  router.delete(
+    "/user",
+    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    controller.deleteUser
+  );
+
+  router.post(
+    "/user",
+    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    controller.modifyUser
+  );
 
   router.get(
     "/mod",
-    [authJwt.verifyToken, authJwt.isModerator],
-    controller.moderatorBoard
+    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    controller.getModeratorStats
   );
 
   router.get(
     "/admin",
-    [authJwt.verifyToken, authJwt.isAdmin],
-    controller.adminBoard
+    [authJwt.verifyToken, authJwt.hasRole("admin")],
+    controller.getAdminStats
   );
 
   return router;

@@ -9,7 +9,7 @@ const deleteUser = (req, res) => {
 };
 
 const getInfo = (req, res) => {
-  const user = User.findOne({ _id: req.body.id }, (err, user) => {
+  const user = User.findOne({ _id: req.params.id }, (err, user) => {
     if (err) res.status(500).send({ message: err });
   });
   res.status(200).send({

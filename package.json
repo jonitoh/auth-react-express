@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server:dev": "cd server && npm dev",
-    "client:dev": "cd client && npm dev",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
     "dev": "concurrently --kill-others \"npm run server:dev\" \"npm run client:dev\""
   },
   "repository": {

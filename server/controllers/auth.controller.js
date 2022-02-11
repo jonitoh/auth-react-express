@@ -77,9 +77,9 @@ const signup = (req, res) => {
   });
 };
 
-const signinWithEmail = (req, res) => {
+const signinWithEmail = async (req, res) => {
   const { email, password } = req.body;
-  User.findByEmail(email)
+  await User.findByEmail(email)
     .populate("roles", "-__v")
     .exec((err, user) => {
       if (err) {
@@ -120,12 +120,12 @@ const signinWithProductKey = (req, res) => {
     {
       key: req.body.productKey,
     },
-    (err, productKey) => {
+    async (err, productKey) => {
       if (err) {
         res.status(500).send({ message: err });
         return;
       }
-      User.findOne({
+      await User.findOne({
         productKey: productKey.key,
       })
         .populate("roles", "-__v")

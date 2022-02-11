@@ -1,5 +1,4 @@
 const express = require("express"); // Import express framework
-const bodyParser = require("body-parser");
 const { getRoutes } = require("./routes");
 
 // thx https://github.com/kentcdodds/express-app-example
@@ -33,13 +32,13 @@ const setupCloseOnExit = (server) => {
   process.on("uncaughtException", exitHandler.bind(null, { exit: true }));
 };
 
-const startServer = (port = process.env.PORT || 4000) => {
+const startServer = async (port = process.env.PORT || 4000) => {
   // Initiate express app
   const app = express();
 
   // Implement middleware;
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
   // being able to serve static files
   app.use("/public", express.static("public"));
@@ -48,52 +47,78 @@ const startServer = (port = process.env.PORT || 4000) => {
   app.use("/", getRoutes());
 
   // Import database and check it's working
-  const db = require("./models");
-  console.log("check readyState", db.conn.readyState);
+  const { db } = require("./models");
+  app.db = db;
+  console.log("check readyState", app.db.conn.readyState);
 
   // Populate database if necessary
-  const populateDatabase = (process.env.NODE_ENV && process.env.NODE_ENV === "development") || (process.env.POPULATE_DB)
+  const populateDatabase =
+    process.env.DB_POPULATE_DATABASE &&
+    process.env.DB_POPULATE_DATABASE === "true";
   if (populateDatabase) {
     // main function
-    console.log("generate data -- start");
+    console.log("populate database -- start");
     //const method = process.env.DATA_GENERATION_METHOD || "json";
     /* -- raw method -- *
-    const method = "raw",
-    const options = {
-      roleInput:  process.env.DB_GENERATION_OPTIONS_ROLE || "./../data/raw/roles.json",
-      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./../data/raw/product-keys.json",
-      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./../data/raw/users.json",
+    const method = "raw";
+    const populateDbOptions = {
+      roleInput:  process.env.DB_GENERATION_OPTIONS_ROLE || "./data/raw/roles.json",
+      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./data/raw/product-keys.json",
+      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./data/raw/users.json",
       coerceRole: false,
-      dumpData: false,
-      outputDir: "./../temp",
     }*/
     /* -- json method -- /
-    const method = "json",
-    const options = {
-      roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./../data/json/roles.json",
-      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./../data/json/product-keys.json",
-      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./../data/json/users.json",
+    const method = "json";
+    const populateDbOptions = {
+      roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./data/json/roles.json",
+      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./data/json/product-keys.json",
+      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./data/json/users.json",
       coerceRole: true,
-      dumpData: false,
-      outputDir: "./../temp",
     }*/
     /* -- random method -- */
-      const method = "random",
-      const options = {
-        roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./../data/random/roles.json",
-        productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./../data/random/product-keys.json",
-        userInput: process.env.DB_GENERATION_OPTIONS_USER || "./../data/random/users.json",//{ numberOfKeysUnused: 3 }
-        coerceRole: false,
-        dumpData: true,
-        outputDir: "./../temp",
-    }
-    console.log("chosen method", method);
-    console.log("chosen options", options);
-    //db.initDatabase(method, options);
+    const method = "random";
+    const populateDbOptions = {
+      roleInput:
+        process.env.DB_GENERATION_OPTIONS_ROLE || "./data/random/roles.json",
+      productKeyInput:
+        process.env.DB_GENERATION_OPTIONS_PRODUCTKEY ||
+        "./data/random/product-keys.json",
+      userInput:
+        process.env.DB_GENERATION_OPTIONS_USER || "./data/random/users.json", //{ numberOfKeysUnused: 3 }
+      coerceRole: false,
+    };
+    console.log("chosen method:", method);
+    console.log("chosen options:", populateDbOptions);
+    await app.db.initDatabase(method, populateDbOptions);
+    console.log("populate database -- end");
   }
 
-  // for development and avoid CORS stuff
+  // Make a dump of the database at the start of the app if necessary
+  const dumpDatabaseAtOpen =
+    process.env.DB_DUMP_AT_OPEN && process.env.DB_DUMP_AT_OPEN === "true";
+  if (dumpDatabaseAtOpen) {
+    console.log("dump database at open -- start");
+    const dumpDbOptions = {
+      parentDir: "./temp",
+      //outputDirName: "my-little-dump",
+    };
+    console.log("dump database at open -- options", dumpDbOptions);
+    await app.db.dumpDatabase(dumpDbOptions);
+    console.log("populate database -- end");
+  }
+
+  // Add super admin product key
+  if (process.env.SUPER_ADMIN_PRODUCT_KEY) {
+    app.db.addSuperAdminProductKey({
+      key: process.env.SUPER_ADMIN_PRODUCT_KEY,
+      //activationDate: new Date(),
+      //activated: true,
+      //validityPeriod: 1 * 30 * 24 * 60 * 60, // in seconds aka 1 month
+    });
+  }
+
   if (process.env.NODE_ENV && process.env.NODE_ENV !== "development") {
+    // for development and avoid CORS stuff
     app.get("*", (req, res) => {
       res.sendFile("build/index.html", { root: __dirname });
     });
@@ -107,9 +132,14 @@ const startServer = (port = process.env.PORT || 4000) => {
   return new Promise((resolve) => {
     const server = app.listen(port, () => {
       console.info(`Listening on port ${server.address().port}`);
-      console.log(`Mongo uri at ${db.config.URI}`);
+      console.log(`Mongo uri at ${app.db.config.URI}`);
       const originalClose = server.close.bind(server);
       server.close = () => {
+        //dump database to see
+        /*console.log(
+          "Should we dump the database?",
+          process.env.DB_DUMP_AT_CLOSE
+        );*/
         return new Promise((resolveClose) => {
           originalClose(resolveClose);
         });

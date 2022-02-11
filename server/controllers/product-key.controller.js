@@ -8,8 +8,8 @@ const deleteProductKey = (req, res) => {
   });
 };
 
-const getInfo = (req, res) => {
-  const productKey = ProductKey.findByKey(req.body.productKey);
+const getInfo = async (req, res) => {
+  const productKey = await ProductKey.findByKey(req.body.productKey);
   res.status(200).send({
     productKey: productKey,
   });

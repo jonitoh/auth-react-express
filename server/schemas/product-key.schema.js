@@ -1,5 +1,5 @@
 const { Schema } = require("mongoose");
-const { insertFromData, dumpData } = require("../utils");
+const { BaseSchemaClass } = require("../utils");
 
 const productKeySchema = new Schema(
   {
@@ -30,9 +30,9 @@ const productKeySchema = new Schema(
   { timestamps: true } // createdAt & updatedAt
 );
 
-class SchemaClass {
+class SchemaClass extends BaseSchemaClass {
   // `findByKey` becomes a static
-  static findByKey = (key) => this.findOne({ key });
+  static findByKey = async (key) => await this.findOne({ key });
 
   // `activate` becomes a document method
   activate = (activationDate = undefined) => {
@@ -62,18 +62,14 @@ class SchemaClass {
       isDuplicated = !!pk;
       duplicated = pk;
     });
+
     return { isDuplicated, duplicated, errors };
   };
 
-  // `insertFromData` becomes a static
-  static insertFromData = (data, cb = undefined) =>
-    insertFromData(data, this, cb);
-
-  // `dumpData` becomes a static
-  static dumpData = (outputDir, filename, cb = undefined) => {
-    const filename = `product-keys-${new Date()}.json`;
-    dumpData(this, outputDir, filename);
-  };
+  // for now it's a virtual
+  get dumpFilename() {
+    return `product-keys-${this.formatDate(new Date())}.json`;
+  }
 }
 
 // `productKeySchema` will now have a getter ans setter as virtuals,  methods as methods and statics as statics

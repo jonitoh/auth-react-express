@@ -3,34 +3,40 @@ const { Role, User } = require("../models");
 checkDuplicateUsernameOrEmail = (req, res, next) => {
   if (req.body.email) {
     // check email
-    User.findOne({
-      email: req.body.email,
-    }).exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
+    User.findOne(
+      {
+        email: req.body.email,
+      },
+      (err, user) => {
+        if (err) {
+          res.status(500).send({ message: err });
+          return;
+        }
+        if (user) {
+          res.status(400).send({ message: "Failed! Email is already in use!" });
+          return;
+        }
       }
-      if (user) {
-        res.status(400).send({ message: "Failed! Email is already in use!" });
-        return;
-      }
-    });
+    );
   } else if (req.body.username) {
     // check username
-    User.findOne({
-      username: req.body.username,
-    }).exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
+    User.findOne(
+      {
+        username: req.body.username,
+      },
+      (err, user) => {
+        if (err) {
+          res.status(500).send({ message: err });
+          return;
+        }
+        if (user) {
+          res
+            .status(400)
+            .send({ message: "Failed! Username is already in use!" });
+          return;
+        }
       }
-      if (user) {
-        res
-          .status(400)
-          .send({ message: "Failed! Username is already in use!" });
-        return;
-      }
-    });
+    );
   } else {
     // we have a problem
     res.status(500).send({
@@ -63,21 +69,24 @@ checkDuplicateProductKey = (req, res, next) => {
     return;
   }
 
-  User.findOne({
-    productKey: duplicateProductKey._id,
-  }).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
+  User.findOne(
+    {
+      productKey: duplicateProductKey._id,
+    },
+    (err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      if (user) {
+        res
+          .status(400)
+          .send({ message: "Failed! ProductKey is already in use!" });
+        return;
+      }
+      next();
     }
-    if (user) {
-      res
-        .status(400)
-        .send({ message: "Failed! ProductKey is already in use!" });
-      return;
-    }
-    next();
-  });
+  );
 };
 
 checkRolesExisted = (req, res, next) => {

@@ -16,35 +16,39 @@ verifyToken = (req, res, next) => {
   });
 };
 
-hasRole = (role, req, res, next) => {
-  // check if the role exists
-  const verifiedRole = Role.findByName(role);
-  if (verifiedRole) {
-    res.status(500).send({ message: `${role} does not exist.` });
-    return;
-  }
+hasRole = (role) => {
+  const middleware = async (req, res, next) => {
+    // check if the role exists
+    const verifiedRole = await Role.findByName(role);
+    if (verifiedRole) {
+      res.status(500).send({ message: `${role} does not exist.` });
+      return;
+    }
 
-  User.findById(req.userId).exec((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
-    if (user.roles.includes(verifiedRole._id)) {
-      next();
-      return;
-    } else {
-      res.status(403).send({ message: `Require ${role.toUpperCase()} Role!` });
-      return;
-    }
-  });
+    User.findById(req.userId, (err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      if (user.roles.includes(verifiedRole._id)) {
+        next();
+        return;
+      } else {
+        res
+          .status(403)
+          .send({ message: `Require ${role.toUpperCase()} Role!` });
+        return;
+      }
+    });
+  };
+  return middleware;
 };
 
-isAdmin = (req, res, next) => hasRole("admin", req, res, next);
+//isAdmin = (req, res, next) => hasRole("admin")(req, res, next);
 
-isModerator = (req, res, next) => hasRole("moderator", req, res, next);
+//isModerator = (req, res, next) => hasRole("moderator")(req, res, next);
 
 module.exports = {
   verifyToken,
-  isAdmin,
-  isModerator,
+  hasRole,
 };

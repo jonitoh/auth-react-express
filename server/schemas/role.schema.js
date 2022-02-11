@@ -1,5 +1,5 @@
 const { Schema } = require("mongoose");
-const { insertFromData, dumpData } = require("../utils");
+const { BaseSchemaClass } = require("../utils");
 
 const roleSchema = new Schema({
   name: {
@@ -14,26 +14,42 @@ const roleSchema = new Schema({
   },
 });
 
-class SchemaClass {
+class SchemaClass extends BaseSchemaClass {
   // `defaultRole` becomes a virtual
   set defaultRole(role) {
     if (role instanceof String) {
-      this._defaultRole = role;
+      this._defaultRoleName = role;
+      this._defaultRole = null;
     } else if (role instanceof this) {
-      this._defaultRole = role.name;
+      this._defaultRoleName = role.name;
+      this._defaultRole = role;
     } else {
       throw new Error("Invalid format");
     }
   }
 
+  // `defaultRoleName` becomes a virtual
+  get defaultRoleName() {
+    if (!!this._defaultRoleName === false) {
+      throw new Error("no role set up yet");
+    }
+    return this._defaultRoleName;
+  }
+
   // `defaultRole` becomes a virtual
   get defaultRole() {
-    const role = this.findByName(this._defaultRole);
-    return role;
+    if (!!this._defaultRole === false) {
+      console.log("We need to retrieve the role as a document first");
+      this.findOne({ name: this._defaultRoleName }, (err, role) => {
+        if (err) console.log(err);
+        this.defaultRole = role;
+      });
+    }
+    return this._defaultRole;
   }
 
   // `findByName` becomes a static
-  static findByName = (name) => this.findOne({ name });
+  static findByName = async (name) => await this.findOne({ name });
 
   // `allRoles` becomes a static
   static allRoles = () =>
@@ -41,15 +57,10 @@ class SchemaClass {
       if (err) console.log(err);
     });
 
-  // `insertFromData` becomes a static
-  static insertFromData = (data, cb = undefined) =>
-    insertFromData(data, this, cb);
-
-  // `dumpData` becomes a static
-  static dumpData = (outputDir, filename, cb = undefined) => {
-    const filename = `roles-${new Date()}.json`;
-    dumpData(this, outputDir, filename);
-  };
+  // for now it's a virtual
+  get dumpFilename() {
+    return `roles-${this.formatDate(new Date())}.json`;
+  }
 }
 
 // `roleSchema` will now have a getter ans setter as virtuals,  methods as methods and statics as statics

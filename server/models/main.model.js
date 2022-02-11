@@ -4,7 +4,11 @@ const {
   randomProductKey,
   randomNumber,
   randomDate,
+  resolvePath,
+  formatDate,
 } = require("./../utils");
+const path = require("path");
+const fs = require("fs");
 
 const getDatabaseConnection = () => {
   // import config
@@ -18,7 +22,7 @@ const getDatabaseConnection = () => {
     family: 4, // Use IPv4, skip trying IPv6
     maxPoolSize: 5,
   });
-  console.log("readyState", connection.readyState);
+  console.log("main model -- readyState", connection.readyState);
 
   // add listeners to the connection
   connection.on("open", () => {
@@ -32,7 +36,7 @@ const getDatabaseConnection = () => {
   // create models
   const User = connection.model("user", require("../schemas/user.schema"));
   const ProductKey = connection.model(
-    "product_key",
+    "productkey",
     require("../schemas/product-key.schema")
   );
   const Role = connection.model("role", require("../schemas/role.schema"));
@@ -97,25 +101,36 @@ const getDatabaseConnection = () => {
     }));
   };
 
-  const formatUsersFromJson = (input, coerceRole) => {
+  const formatUsersFromJson = async (input, coerceRole) => {
     // import users
     const data = resolveInput(input);
 
     // helpers
-    const mapToProductKeyId = (key) =>
-      ProductKey.findOne({ key: key }, (err, pk) => {});
-    const mapToRoleId = (role) =>
-      Role.findOne({ name: role }, (err, role) => {});
+    const mapToProductKeyId = async (key) => {
+      const pk = await ProductKey.findOne({ key });
+      return pk ? pk._id : undefined;
+    };
+
+    const mapToRoleId = async (name) => {
+      const role = await Role.findOne({ name });
+      return role ? role._id : undefined;
+    };
 
     const formattedData = [];
 
     for (let index = 0; index < data.length; index++) {
       const { productKey, roles, ...rest } = data[index];
-      let formattedProductKey = mapToProductKeyId(productKey);
-      let formattedRoles = roles.map((role) => mapToRoleId(role));
+
+      let formattedProductKey = await mapToProductKeyId(productKey);
+
+      let formattedRoles = [];
+      for (let idx = 0; idx < roles.length; idx++) {
+        formattedRoles.push(await mapToRoleId(roles[idx]));
+      }
+      formattedRoles = formattedRoles.filter((role) => !!role);
 
       let hasInconsistentProductKey = !formattedProductKey;
-      let hasInconsistentRole = formattedRoles.some((role) => !role);
+      let hasInconsistentRole = formattedRoles.length === 0;
 
       // handle inconsistency
       if (hasInconsistentProductKey) {
@@ -123,12 +138,11 @@ const getDatabaseConnection = () => {
       }
       if (hasInconsistentRole) {
         if (coerceRole) {
-          /*
-          formattedRoles = formattedRoles.map((role) =>
-            role ? role : Role.defaultRole.name
-          );
+          formattedRoles = [Role.defaultRole._id];
           hasInconsistentRole = false;
-          */
+          console.log(
+            "inconsistency on the role being corrected with the default value."
+          );
         } else {
           console.log("inconsistency on the role.");
         }
@@ -144,7 +158,7 @@ const getDatabaseConnection = () => {
       }
     }
     console.log(
-      `${data.length - formattedData.length} removed from inconsitency`
+      `${data.length - formattedData.length} users removed from inconsitency`
     );
     return formattedData;
   };
@@ -203,10 +217,10 @@ const getDatabaseConnection = () => {
     }
 
     // create pseudo-documents
-    const formattedData = productKeys.map((i, key) => ({
-      username: `user ${i}`,
-      email: `user${i}@test.com`,
-      password: `passwordOfUser${i}`,
+    const formattedData = productKeys.map((key, idx) => ({
+      username: `user ${idx}`,
+      email: `user${idx}@test.com`,
+      password: `passwordOfUser${idx}`,
       productKey: key,
       roles: Array.from(
         Array(randomNumber(1, roles.length)),
@@ -216,15 +230,68 @@ const getDatabaseConnection = () => {
     return formattedData;
   };
 
-  const initDatabase = (
+  const dumpDatabase = async ({
+    parentDir = "./tmp",
+    outputDirName = undefined,
+    ignoreModels = [],
+    keepModels = [],
+  }) => {
+    console.log("dumpDatabase -- init ");
+    // find list of models to dump
+    let availableModels = Object.keys(connection.models);
+    if (keepModels.length > 0) {
+      availableModels = availableModels.filter((model) =>
+        keepModels.includes(model)
+      );
+    }
+    if (ignoreModels.length > 0) {
+      availableModels = availableModels.filter(
+        (model) => !ignoreModels.includes(model)
+      );
+    }
+    if (availableModels.length === 0) {
+      throw new Error(
+        "No more available models after filtering with keepModels and ignoreModels options!"
+      );
+    }
+
+    // find absolute directory path
+    const absoluteOutputDir = path.join(
+      resolvePath(parentDir),
+      outputDirName || `dump-${formatDate(new Date())}`
+    );
+    console.log("absoluteOutputDir", absoluteOutputDir);
+
+    // create directory if necessary
+    fs.mkdir(absoluteOutputDir, { recursive: true }, async (err, pth) => {
+      if (err) console.log("err on fullpathdir", err);
+
+      for (let index = 0; index < availableModels.length; index++) {
+        //dumpData = async (outputDir)
+        try {
+          const modelName = availableModels[index];
+          const model = connection.models[modelName];
+          const filename = path.join(pth, `${modelName}.json`);
+          const data = await model.find({});
+          const jsonData = JSON.stringify(data);
+          fs.writeFile(filename, jsonData, "utf-8", (err) => {
+            if (err) console.log(err);
+          });
+        } catch (error) {
+          throw new Error(error.toString());
+        }
+      }
+    });
+    console.log("dumpDatabase -- end");
+  };
+
+  const initDatabase = async (
     method = "raw",
     {
       roleInput = "",
       productKeyInput = "",
       userInput = "",
       coerceRole = true, //false,
-      dumpData = false,
-      outputDir = "./../utils",
     }
   ) => {
     // prepare data to insert
@@ -245,7 +312,7 @@ const getDatabaseConnection = () => {
         break;
       case "random":
         // random roles
-        const { roles, defaultRoleName } = roleInput;
+        const { roles, defaultRoleName } = resolveInput(roleInput);
         const formattedRoles = formatRolesFromRandom({
           roles,
           defaultRoleName,
@@ -264,7 +331,7 @@ const getDatabaseConnection = () => {
         const { numberOfKeysUnused } = userInput;
         const formattedUsers = formatUsersFromRandom({
           roles,
-          finalProductKeys,
+          productKeys: finalProductKeys,
           numberOfKeysUnused,
         });
         data = {
@@ -278,27 +345,58 @@ const getDatabaseConnection = () => {
         throw new Error("Unknow method. Unable to continue.");
         break;
     }
-    console.log("data prepared");
+    //console.log("Prepared data:", data);
 
-    // insert according to the method
-    if (method === "raw") {
-      Role.insertFromData(data.roles);
-      ProductKey.insertFromData(data.productKeys);
-      User.insertFromData(data.users);
-    } else {
-      Role.insertFromData(data.roles);
-      ProductKey.insertFromData(data.productKeys);
-      // depend on pkeys and roles
-      const userData = formatUsersFromJson(data.users, coerceRole);
-      User.insertFromData(userData);
-    }
+    try {
+      console.log("initDatabase -- insertion ");
+      if (method === "raw") {
+        const roles = await Role.insertMany(data.roles);
+        console.log(
+          roles instanceof Array
+            ? `${roles.length} documents added to the role collection.`
+            : "No roles added to the role collection"
+        );
 
-    // dump all the data ?
-    if (dumpData) {
-      Role.dumpData(outputDir);
-      ProductKey.dumpData(outputDir);
-      User.dumpData(outputDir);
+        const productKeys = await ProductKey.insertMany(data.productKeys);
+        console.log(
+          productKeys instanceof Array
+            ? `${productKeys.length} documents added to the productkeys collection.`
+            : "No document added to the collection productkeys"
+        );
+
+        const users = await User.insertMany(data.users);
+        console.log(
+          users instanceof Array
+            ? `${users.length} documents added to the users collection.`
+            : "No document added to the collection users"
+        );
+      } else {
+        const roles = await Role.insertMany(data.roles);
+        console.log(
+          roles instanceof Array
+            ? `${roles.length} documents added to the role collection.`
+            : "No roles added to the role collection"
+        );
+
+        const productKeys = await ProductKey.insertMany(data.productKeys);
+        console.log(
+          productKeys instanceof Array
+            ? `${productKeys.length} documents added to the productkeys collection.`
+            : "No document added to the collection productkeys"
+        );
+
+        const userData = await formatUsersFromJson(data.users, coerceRole);
+        const users = await User.insertMany(userData);
+        console.log(
+          users instanceof Array
+            ? `${users.length} documents added to the users collection.`
+            : "No document added to the collection users"
+        );
+      }
+    } catch (error) {
+      throw new Error(`error during the ingestion phase:\n${error}`);
     }
+    console.log("initDatabase -- end");
   };
 
   // create output
@@ -308,9 +406,10 @@ const getDatabaseConnection = () => {
     User: User,
     ProductKey: ProductKey,
     Role: Role,
-    config: config,
+    config,
     addSuperAdminProductKey: addSuperAdminProductKey,
     initDatabase: initDatabase,
+    dumpDatabase: dumpDatabase,
   };
 
   return db;

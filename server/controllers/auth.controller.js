@@ -2,6 +2,42 @@ const config = require("../config/auth.config");
 const { User, Role, ProductKey } = require("../models");
 const jwt = require("jsonwebtoken");
 
+const generateAccessToken = (user) => {
+  // add role too;
+  const token = jwt.sign({ id: user.id }, config.ACCESS_TOKEN, {
+    expiresIn: 86400, // 24 hours
+  });
+  return token;
+};
+
+const generateRefreshToken = (user) => {
+  // add role too;
+  const token = jwt.sign({ id: user.id }, config.REFRESH_TOKEN, {
+    expiresIn: "1y", // 24 hours
+  });
+  return token;
+};
+
+const refreshToken = (req, res) => {
+  const authHeader = req.headers["x-access-token"]; // "authorization"
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(403).send({ message: "No token provided!" });
+  }
+  jwt.verify(token, config.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized!" });
+    }
+    // check user exists and his rights
+    delete decoded.iat;
+    delete decoded.exp;
+    const refreshedToken = generateRefreshToken(decoded);
+    res.send({
+      accessToken: refreshedToken,
+    });
+  });
+};
+
 const signup = (req, res) => {
   const { username, email, password, productKey, roles } = req.body;
   const user = new User({
@@ -98,9 +134,8 @@ const signinWithEmail = async (req, res) => {
         });
       }
       // retrieve token
-      const token = jwt.sign({ id: user.id }, config.SECRET, {
-        expiresIn: 86400, // 24 hours
-      });
+      const accessToken = generateAccessToken(user);
+      const refreshedToken = generateRefreshToken(user);
       const authorities = [];
       for (let i = 0; i < user.roles.length; i++) {
         authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
@@ -110,7 +145,8 @@ const signinWithEmail = async (req, res) => {
         username: user.username,
         email: user.email,
         roles: authorities,
-        accessToken: token,
+        accessToken,
+        refreshToken: refreshedToken,
       });
     });
 };
@@ -138,9 +174,8 @@ const signinWithProductKey = (req, res) => {
             return res.status(404).send({ message: "User Not found." });
           }
 
-          const token = jwt.sign({ id: user.id }, config.SECRET, {
-            expiresIn: 86400, // 24 hours
-          });
+          const token = generateAccessToken(user);
+          const refreshedToken = generateRefreshToken(user);
           const authorities = [];
           for (let i = 0; i < user.roles.length; i++) {
             authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
@@ -151,6 +186,7 @@ const signinWithProductKey = (req, res) => {
             email: user.email,
             roles: authorities,
             accessToken: token,
+            refreshToken: refreshedToken,
           });
         });
     }
@@ -161,4 +197,5 @@ module.exports = {
   signup,
   signinWithEmail,
   signinWithProductKey,
+  refreshToken,
 };

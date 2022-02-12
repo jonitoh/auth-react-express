@@ -1,3 +1,4 @@
 module.exports = {
-  SECRET: process.env.JWT_SECRET || "my-little-secret",
+  ACCESS_TOKEN: process.env.ACCESS_TOKEN_SECRET,
+  REFRESH_TOKEN: process.env.REFRESH_TOKEN_SECRET,
 };

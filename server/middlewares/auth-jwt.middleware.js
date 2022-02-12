@@ -2,12 +2,14 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/auth.config.js");
 const { User, Role } = require("../models");
 
+// authentificateToken
 verifyToken = (req, res, next) => {
-  let token = req.headers["x-access-token"];
+  const authHeader = req.headers["x-access-token"]; // "authorization"
+  const token = authHeader && authHeader.split(" ")[1];
   if (!token) {
     return res.status(403).send({ message: "No token provided!" });
   }
-  jwt.verify(token, config.SECRET, (err, decoded) => {
+  jwt.verify(token, config.ACCESS_TOKEN, (err, decoded) => {
     if (err) {
       return res.status(401).send({ message: "Unauthorized!" });
     }
@@ -17,6 +19,34 @@ verifyToken = (req, res, next) => {
 };
 
 hasRole = (role) => {
+  const middleware = async (req, res, next) => {
+    // check if the role exists
+    const verifiedRole = await Role.findByName(role);
+    if (verifiedRole) {
+      res.status(500).send({ message: `${role} does not exist.` });
+      return;
+    }
+
+    User.findById(req.userId, (err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      if (user.roles.includes(verifiedRole._id)) {
+        next();
+        return;
+      } else {
+        res
+          .status(403)
+          .send({ message: `Require ${role.toUpperCase()} Role!` });
+        return;
+      }
+    });
+  };
+  return middleware;
+};
+
+hasLevel = (role) => {
   const middleware = async (req, res, next) => {
     // check if the role exists
     const verifiedRole = await Role.findByName(role);

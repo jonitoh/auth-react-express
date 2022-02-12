@@ -32,6 +32,9 @@ const getRouter = () => {
   // Sign In with Product Key
   router.post("/signin/product-key", controller.signinWithProductKey);
 
+  // Refresh token
+  router.post("/refresh-token", controller.refreshToken);
+
   return router;
 };
 

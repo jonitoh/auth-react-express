@@ -43,6 +43,11 @@ const formatDate = (date) =>
   "" +
   pad(date.getUTCSeconds());
 
+function handleError(error) {
+  console.error(`Error ${error}\n${error.stack}`);
+  process.exit(2);
+}
+
 class BaseSchemaClass {
   // `basicCallback` becomes a static
   static basicCallback(error, docs) {

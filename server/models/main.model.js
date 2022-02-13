@@ -357,14 +357,18 @@ const getDatabaseConnection = () => {
     activated = true,
     validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
   }) => {
+    console.log("@@ start");
     // --- Product Key process
     let productKeyId;
+    console.log("@@ start productKeyId", productKeyId);
 
+    console.log("@@ pk?", productKey);
     if (productKey) {
+      console.log("@@ into check pk");
       // check if the key is already here
       const { isDuplicated, duplicateProductKey, errors } =
         ProductKey.checkDuplicate(productKey);
-
+      console.log("result", { isDuplicated, duplicateProductKey, errors });
       // show potential errors
       if (errors) {
         console.log(errors);
@@ -388,6 +392,8 @@ const getDatabaseConnection = () => {
             productKeyId = duplicateProductKey._id;
           }
         });
+      } else {
+        console.log("Product key not registered");
       }
     }
     if (!productKeyId) {
@@ -402,11 +408,14 @@ const getDatabaseConnection = () => {
         const pk = await newProductKey.save();
         productKeyId = pk._id;
       } catch (error) {
+        console.log(error);
         throw new Error(`error on creation of Product Key:\n${err}`);
       }
     }
+    console.log("@@ final pkid", productKeyId);
     // --- Role process
     let roleId;
+    console.log("@@ roleId start", roleId);
 
     // retrieve highest role
     Role.find(
@@ -414,12 +423,16 @@ const getDatabaseConnection = () => {
       { _id: 1, name: 1 },
       { limit: 1, sort: { level: -1 } },
       (err, highestRole) => {
+        console.log("@@ highest?", highestRole);
         if (err) console.log(err);
-        if (!highestRole)
+        if (highestRole) {
+          roleId = highestRole._id;
+        } else {
           throw new Error("No highest role found, check the database");
-        roleId = highestRole._id;
+        }
       }
     );
+    console.log("@@ final roleId", roleId);
 
     // --- User process
     const user = new User({
@@ -435,6 +448,7 @@ const getDatabaseConnection = () => {
       if (!user) throw new Error("Problem during the creation of the user");
     });
     console.log("super admin created with the following id", user._id);
+    console.log("@@ user", user);
   };
 
   // create output

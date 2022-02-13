@@ -63,17 +63,13 @@ class SchemaClass extends BaseSchemaClass {
 
   // `checkDuplicate` becomes a static
   static checkDuplicate(key) {
-    let isDuplicated = false;
-    let duplicated;
-    let errors;
-
-    this.findOne({ key }, (err, pk) => {
-      if (err) errors = err;
-      isDuplicated = !!pk;
-      duplicated = pk;
+    const res = this.findOne({ key }, (errors, duplicated) => {
+      console.log("show me", [errors, duplicated]);
+      const isDuplicated = !!duplicated;
+      return { isDuplicated, duplicated, errors };
     });
-
-    return { isDuplicated, duplicated, errors };
+    console.log("res", res);
+    return res;
   }
 }
 

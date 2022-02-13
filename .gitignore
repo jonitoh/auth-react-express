@@ -8,4 +8,5 @@ client/node_modules
 # server side
 server/node_modules
 server/temp
+server/data/raw
 .super-admin.json

@@ -13,7 +13,7 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
           return;
         }
         if (user) {
-          res.status(400).send({ message: "Failed! Email is already in use!" });
+          res.status(400).send({ message: "USED_EMAIL" });
           return;
         }
       }
@@ -30,9 +30,7 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
           return;
         }
         if (user) {
-          res
-            .status(400)
-            .send({ message: "Failed! Username is already in use!" });
+          res.status(400).send({ message: "USED_USERNAME" });
           return;
         }
       }
@@ -40,12 +38,10 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
   } else {
     // we have a problem
     res.status(500).send({
-      message:
-        "We can't check for duplicate user registration without username or email",
+      message: "UNFOUND_USERNAME_OR_EMAIL",
     });
     return;
   }
-
   // go back to business
   next();
 };
@@ -64,7 +60,7 @@ checkDuplicateProductKey = (req, res, next) => {
   // check if the key is already stored
   if (!isDuplicated) {
     res.status(500).send({
-      message: `Unknown product key`,
+      message: "UNKNOWN_PRODUCT_KEY",
     });
     return;
   }
@@ -79,9 +75,7 @@ checkDuplicateProductKey = (req, res, next) => {
         return;
       }
       if (user) {
-        res
-          .status(400)
-          .send({ message: "Failed! ProductKey is already in use!" });
+        res.status(400).send({ message: "USED_PRODUCT_KEY" });
         return;
       }
       next();
@@ -89,16 +83,14 @@ checkDuplicateProductKey = (req, res, next) => {
   );
 };
 
-checkRolesExisted = (req, res, next) => {
-  if (req.body.roles) {
+checkRoleExisted = (req, res, next) => {
+  if (req.body.role) {
     const allRoles = Role.allRoles().map(({ name }) => name);
-    for (let i = 0; i < req.body.roles.length; i++) {
-      if (!allRoles.includes(req.body.roles[i])) {
-        res.status(400).send({
-          message: `Failed! Role ${req.body.roles[i]} does not exist!`,
-        });
-        return;
-      }
+    if (!allRoles.includes(req.body.role)) {
+      res.status(400).send({
+        message: "UNKNOWN_ROLE",
+      });
+      return;
     }
   }
   next();
@@ -107,5 +99,5 @@ checkRolesExisted = (req, res, next) => {
 module.exports = {
   checkDuplicateUsernameOrEmail,
   checkDuplicateProductKey,
-  checkRolesExisted,
+  checkRoleExisted,
 };

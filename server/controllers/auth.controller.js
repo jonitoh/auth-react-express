@@ -1,32 +1,38 @@
-const config = require("../config/auth.config");
+const authConfig = require("../config/auth.config");
 const { User, Role, ProductKey } = require("../models");
 const jwt = require("jsonwebtoken");
 
 const generateAccessToken = (user) => {
-  // add role too;
-  const token = jwt.sign({ id: user.id }, config.ACCESS_TOKEN, {
-    expiresIn: 86400, // 24 hours
-  });
+  const token = jwt.sign(
+    { id: user.id, role: user.role },
+    authConfig.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: authConfig.ACCESS_TOKEN_EXPIRATION,
+    }
+  );
   return token;
 };
 
 const generateRefreshToken = (user) => {
-  // add role too;
-  const token = jwt.sign({ id: user.id }, config.REFRESH_TOKEN, {
-    expiresIn: "1y", // 24 hours
-  });
+  const token = jwt.sign(
+    { id: user.id, role: user.role },
+    authConfig.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: authConfig.REFRESH_TOKEN_EXPIRATION,
+    }
+  );
   return token;
 };
 
 const refreshToken = (req, res) => {
-  const authHeader = req.headers["x-access-token"]; // "authorization"
+  const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) {
-    return res.status(403).send({ message: "No token provided!" });
+    return res.status(403).send({ message: "NO_TOKEN_PROVIDED" });
   }
-  jwt.verify(token, config.ACCESS_TOKEN, (err, decoded) => {
+  jwt.verify(token, authConfig.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(401).send({ message: "Unauthorized!" });
+      return res.status(401).send({ message: "UNAUTHORIZED" });
     }
     // check user exists and his rights
     delete decoded.iat;
@@ -38,12 +44,13 @@ const refreshToken = (req, res) => {
   });
 };
 
-const signup = (req, res) => {
-  const { username, email, password, productKey, roles } = req.body;
+const signup = async (req, res) => {
+  const { username, email, password, productKey, roleName, roleId, forceRole } =
+    req.body;
   const user = new User({
     username,
     email,
-    password: User.hashPassword(password),
+    password: await User.hashPassword(password),
   });
   user.save((err, user) => {
     // errors
@@ -66,89 +73,73 @@ const signup = (req, res) => {
         }
       );
     } else {
-      res.status(500).send({ message: "product key missing" });
+      res.status(500).send({ message: "MISSING_PRODUCT_KEY" });
       return;
     }
-    // Roles
-    if (roles) {
-      const allRoles = Role.allRoles();
-      const mappedRoles = [];
-      const errorMsgs = [];
-      for (let index = 0; index < roles.length; index++) {
-        // role as a name
-        const role = roles[index];
-        // role exists ?
-        const foundRole = allRoles.find(({ name }) => role === name);
-        if (foundRole) {
-          if (mappedRoles.includes(foundRole._id)) {
-            mappedRoles.push(foundRole._id);
-          }
-        } else {
-          errorMsgs.push(`The following role is not present: ${role}.`);
-        }
+    // Role
+    const allRoles = Role.allRoles();
+    let userRole;
+    if (roleId) {
+      const isValidRole = allRoles.find(({ _id }) => _id === roleId);
+      if (isValidRole) {
+        userRole = roleId;
       }
-      if (mappedRoles.length === 0) {
-        if (req.body.forceRole) {
-          user.roles = [
-            allRoles.find(({ name }) => name === Role.defaultRole)._id,
-          ];
-          console.log("No given role. Set to default.");
-        } else {
-          res.status(500).send({ message: errorMsgs.join(" || ") });
-        }
-      } else {
-        user.roles = mappedRoles;
-        res.send({ message: "User was registered successfully!" });
+    }
+    if (roleName && userRole) {
+      const isValidName = allRoles.find(({ name }) => name === roleName);
+      if (isValidName) {
+        userRole = isValidName._id;
       }
+    }
+    if (forceRole) {
+      if (!userRole) {
+        console.log("No given role. Set to default.");
+        userRole = allRoles.find(({ name }) => name === Role.defaultRole)._id;
+      }
+    }
+
+    if (userRole) {
+      user.role = userRole;
     } else {
-      if (req.body.forceRole) {
-        user.roles = [
-          allRoles.find(({ name }) => name === Role.defaultRole)._id,
-        ];
-        res.status(200).send({ message: "No given role. Set to default." });
-      } else {
-        res.status(500).send({ message: "No given role" });
-      }
+      res.status(500).send({ message: "NO_ROLE_FOUND" });
     }
   });
 };
 
 const signinWithEmail = async (req, res) => {
   const { email, password } = req.body;
-  await User.findByEmail(email)
-    .populate("roles", "-__v")
-    .exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-      if (!user) {
-        return res.status(404).send({ message: "User Not found." });
-      }
-      // check password -- TODO
-      const isValidPassword = user.checkPassword(password);
-      if (!isValidPassword) {
-        return res.status(401).send({
-          accessToken: null,
-          message: "Invalid Password!",
-        });
-      }
-      // retrieve token
-      const accessToken = generateAccessToken(user);
-      const refreshedToken = generateRefreshToken(user);
-      const authorities = [];
-      for (let i = 0; i < user.roles.length; i++) {
-        authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
-      }
-      res.status(200).send({
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        roles: authorities,
-        accessToken,
-        refreshToken: refreshedToken,
+  await User.findByEmail(email).exec(async (err, user) => {
+    if (err) {
+      res.status(500).send({ message: err });
+      return;
+    }
+    if (!user) {
+      return res.status(404).send({ message: "USER_NOT_FOUND" });
+    }
+    // check password
+    const isValidPassword = await user.checkPassword(password);
+    if (!isValidPassword) {
+      return res.status(401).send({
+        accessToken: null,
+        message: "INVALID_PASSWORD",
       });
+    }
+    // retrieve token
+    const accessToken = generateAccessToken(user);
+    const refreshedToken = generateRefreshToken(user);
+
+    const roleDoc = await Role.findById(user.role);
+
+    res.status(200).send({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      roleId: user.role,
+      roleName: roleDoc.name,
+      accessToken,
+      refreshToken: refreshedToken,
     });
+  });
 };
 
 const signinWithProductKey = (req, res) => {
@@ -161,34 +152,35 @@ const signinWithProductKey = (req, res) => {
         res.status(500).send({ message: err });
         return;
       }
-      await User.findOne({
-        productKey: productKey.key,
-      })
-        .populate("roles", "-__v")
-        .exec((err, user) => {
+      await User.findOne(
+        {
+          productKey: productKey.key,
+        },
+        async (err, user) => {
           if (err) {
             res.status(500).send({ message: err });
             return;
           }
           if (!user) {
-            return res.status(404).send({ message: "User Not found." });
+            return res.status(404).send({ message: "USER_NOT_FOUND" });
           }
 
           const token = generateAccessToken(user);
           const refreshedToken = generateRefreshToken(user);
-          const authorities = [];
-          for (let i = 0; i < user.roles.length; i++) {
-            authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
-          }
+
+          const roleDoc = await Role.findById(user.role);
+
           res.status(200).send({
             id: user._id,
             username: user.username,
             email: user.email,
-            roles: authorities,
+            roleId: user.role,
+            roleName: roleDoc,
             accessToken: token,
             refreshToken: refreshedToken,
           });
-        });
+        }
+      );
     }
   );
 };

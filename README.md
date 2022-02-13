@@ -189,6 +189,12 @@ This project is released under the terms of the [MIT License](LICENSE).
 
 - [auth mongo express] (https://www.bezkoder.com/node-js-mongodb-auth-jwt/)
 
+- [mongoose-style-guide] (https://github.com/Zwimber/mongoose-style-guide)
+
+- [mongoose doc] (https://mongoosejs.com/): yes read the doc is necessary
+
+- [intro mongoose] (https://www.freecodecamp.org/news/introduction-to-mongoose-for-mongodb-d2a7aa593c57/) for those who prefer read a short introduction before dive in the doc
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

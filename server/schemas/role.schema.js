@@ -12,6 +12,38 @@ const roleSchema = new Schema({
     required: true,
     default: false,
   },
+  readOwn: {
+    type: Boolean,
+    default: false,
+  },
+  readOther: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  modifyOwn: {
+    type: Boolean,
+    default: false,
+  },
+  modifyOther: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  deleteOwn: {
+    type: Boolean,
+    default: false,
+  },
+  deleteOther: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  level: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
 });
 
 class SchemaClass extends BaseSchemaClass {
@@ -49,17 +81,20 @@ class SchemaClass extends BaseSchemaClass {
   }
 
   // `findByName` becomes a static
-  static findByName = async (name) => await this.findOne({ name });
+  static async findByName(name) {
+    return await this.findOne({ name });
+  }
 
   // `allRoles` becomes a static
-  static allRoles = () =>
-    this.find({}, { _id: 1, name: 1 }, (err, result) => {
+  static allRoles() {
+    return this.find({}, { _id: 1, name: 1 }, (err, result) => {
       if (err) console.log(err);
     });
+  }
 
-  // for now it's a virtual
-  get dumpFilename() {
-    return `roles-${this.formatDate(new Date())}.json`;
+  // `higherThan` becomes a method
+  higherThan(number) {
+    return number >= this.level;
   }
 }
 

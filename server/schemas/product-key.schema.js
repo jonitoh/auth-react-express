@@ -1,5 +1,8 @@
 const { Schema } = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
 const { BaseSchemaClass } = require("../utils");
+
+const randomProductKey = () => uuidv4();
 
 const productKeySchema = new Schema(
   {
@@ -7,20 +10,18 @@ const productKeySchema = new Schema(
       type: String,
       required: true,
       unique: true,
+      default: randomProductKey,
     },
-
     activationDate: {
       type: Date,
       required: true,
-      default: new Date(),
+      default: Date.now,
     },
-
     activated: {
       type: Boolean,
       required: true,
       default: false,
     },
-
     validityPeriod: {
       type: Number,
       required: true,
@@ -31,28 +32,37 @@ const productKeySchema = new Schema(
 );
 
 class SchemaClass extends BaseSchemaClass {
+  // `generateKey` becomes a static
+  static generateKey() {
+    return randomProductKey();
+  }
+
   // `findByKey` becomes a static
-  static findByKey = async (key) => await this.findOne({ key });
+  static async findByKey(key) {
+    return await this.findOne({ key });
+  }
 
   // `activate` becomes a document method
-  activate = (activationDate = undefined) => {
-    this.activationDate = activationDate || new Date();
+  activate(activationDate = undefined) {
+    this.activationDate = activationDate || Date.now();
     this.activated = true;
-  };
+  }
 
   // `deactivate` becomes a document method
-  deactivate = () => (this.activated = false);
+  deactivate() {
+    this.activated = false;
+  }
 
   // `isValid` becomes a virtual
   get isValid() {
     return (
-      (new Date().getTime() - this.activationDate.getTime()) / 1000 <
+      (Date.now().getTime() - this.activationDate.getTime()) / 1000 <
       this.validityPeriod
     );
   }
 
   // `checkDuplicate` becomes a static
-  static checkDuplicate = (key) => {
+  static checkDuplicate(key) {
     let isDuplicated = false;
     let duplicated;
     let errors;
@@ -64,11 +74,6 @@ class SchemaClass extends BaseSchemaClass {
     });
 
     return { isDuplicated, duplicated, errors };
-  };
-
-  // for now it's a virtual
-  get dumpFilename() {
-    return `product-keys-${this.formatDate(new Date())}.json`;
   }
 }
 

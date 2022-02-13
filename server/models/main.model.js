@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const {
   resolveInput,
-  randomProductKey,
   randomNumber,
   randomDate,
   resolvePath,
@@ -12,10 +11,10 @@ const fs = require("fs");
 
 const getDatabaseConnection = () => {
   // import config
-  const config = require("../config/db.config");
+  const dbConfig = require("../config/db.config");
 
   // create connection
-  const connection = mongoose.createConnection(config.URI, {
+  const connection = mongoose.createConnection(dbConfig.URI, {
     useNewUrlParser: true, // use the newest url string parser
     useUnifiedTopology: true, // use the newest monitoring engine
     //useFindAndModify: true,
@@ -41,47 +40,94 @@ const getDatabaseConnection = () => {
   );
   const Role = connection.model("role", require("../schemas/role.schema"));
 
-  const addSuperAdminProductKey = ({
-    key,
+  const addSuperAdminUser = async ({
+    username = undefined,
+    email,
+    password,
+    productKey = undefined,
     activationDate = new Date(),
     activated = true,
-    validityPeriod = 1 * 30 * 24 * 60 * 60, // in seconds aka 1 month
+    validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
   }) => {
-    // check if the key is already here
-    const { isDuplicated, duplicateProductKey, errors } =
-      ProductKey.checkDuplicate(key);
+    // --- Product Key process
+    let productKeyId;
 
-    // show potential errors
-    if (errors) {
-      console.log(errors);
-      return;
-    }
+    if (productKey) {
+      // check if the key is already here
+      const { isDuplicated, duplicateProductKey, errors } =
+        ProductKey.checkDuplicate(productKey);
 
-    // check if the key is already stored
-    if (isDuplicated) {
-      console.log(
-        `Super admin product key has already been added and activated since ${duplicateProductKey.activationDate}.`
-      );
-      return;
-    }
-
-    // new key to add
-    const productKey = new ProductKey({
-      key,
-      activationDate,
-      activated,
-      validityPeriod,
-    });
-
-    productKey.save((err, _) => {
       // show potential errors
-      if (err) console.log(err);
-      console.log(
-        "Super admin product Key was created and registered successfully!"
-      );
-    });
-  };
+      if (errors) {
+        console.log(errors);
+        return;
+      }
 
+      // check if the key is already stored
+      if (isDuplicated) {
+        console.log(
+          `Super admin product key has already been added and activated since ${duplicateProductKey.activationDate}.`
+        );
+        // check if a user is attached to it
+
+        User.find({ key: duplicateProductKey._id }, (err, users) => {
+          if (err) console.log(err);
+          if (users) {
+            throw new Error(
+              "This product key is alredy use. You can't use it "
+            );
+          } else {
+            productKeyId = duplicateProductKey._id;
+          }
+        });
+      }
+    }
+    if (!productKeyId) {
+      // new key to add
+      const newProductKey = new ProductKey({
+        key: productKey,
+        activationDate,
+        activated,
+        validityPeriod,
+      });
+      try {
+        const pk = await newProductKey.save();
+        productKeyId = pk._id;
+      } catch (error) {
+        throw new Error(`error on creation of Product Key:\n${err}`);
+      }
+    }
+    // --- Role process
+    let roleId;
+
+    // retrieve highest role
+    Role.find(
+      {},
+      { _id: 1, name: 1 },
+      { limit: 1, sort: { level: -1 } },
+      (err, highestRole) => {
+        if (err) console.log(err);
+        if (!highestRole)
+          throw new Error("No highest role found, check the database");
+        roleId = highestRole._id;
+      }
+    );
+
+    // --- User process
+    const user = new User({
+      username,
+      email,
+      password: await User.hashPassword(password),
+      productKey: productKeyId,
+      role: roleId,
+    });
+    user.save((err, user) => {
+      console.log("try there");
+      if (err) console.log(err);
+      if (!user) throw new Error("Problem during the creation of the user");
+    });
+    console.log("super admin created with the following id", user._id);
+  };
   // --- init database functions --- //
   // *** json has no ref nor _id
   const formatRolesFromJson = (input) => {
@@ -104,33 +150,39 @@ const getDatabaseConnection = () => {
   const formatUsersFromJson = async (input, coerceRole) => {
     // import users
     const data = resolveInput(input);
-
     // helpers
     const mapToProductKeyId = async (key) => {
+      //const all = await ProductKey.find({});
+      //console.log("allPK", all.length ? all.length : 0);
       const pk = await ProductKey.findOne({ key });
+      //console.log("mapped pk", pk ? pk._id : undefined);
       return pk ? pk._id : undefined;
     };
 
     const mapToRoleId = async (name) => {
+      //const all = await Role.find({});
+      //console.log("allR", all.length ? all.length : 0);
       const role = await Role.findOne({ name });
+      //console.log("mapped role", role ? role._id : undefined);
       return role ? role._id : undefined;
     };
 
     const formattedData = [];
 
     for (let index = 0; index < data.length; index++) {
-      const { productKey, roles, ...rest } = data[index];
+      console.log("--------index", index);
+      const { productKey, role, ...rest } = data[index];
 
-      let formattedProductKey = await mapToProductKeyId(productKey);
+      //console.log("productKey", productKey);
+      //console.log("role", role);
+      const formattedProductKey = await mapToProductKeyId(productKey);
+      let formattedRole = await mapToRoleId(role);
 
-      let formattedRoles = [];
-      for (let idx = 0; idx < roles.length; idx++) {
-        formattedRoles.push(await mapToRoleId(roles[idx]));
-      }
-      formattedRoles = formattedRoles.filter((role) => !!role);
+      //console.log("formattedProductKey", formattedProductKey);
+      //console.log("formattedRole", formattedRole);
 
       let hasInconsistentProductKey = !formattedProductKey;
-      let hasInconsistentRole = formattedRoles.length === 0;
+      let hasInconsistentRole = !formattedRole;
 
       // handle inconsistency
       if (hasInconsistentProductKey) {
@@ -138,7 +190,7 @@ const getDatabaseConnection = () => {
       }
       if (hasInconsistentRole) {
         if (coerceRole) {
-          formattedRoles = [Role.defaultRole._id];
+          formattedRole = Role.defaultRole._id;
           hasInconsistentRole = false;
           console.log(
             "inconsistency on the role being corrected with the default value."
@@ -152,7 +204,7 @@ const getDatabaseConnection = () => {
       if (!hasInconsistentProductKey && !hasInconsistentRole) {
         formattedData.push({
           productKey: formattedProductKey,
-          roles: formattedRoles,
+          role: formattedRole,
           ...rest,
         });
       }
@@ -164,13 +216,18 @@ const getDatabaseConnection = () => {
   };
 
   const formatRolesFromRandom = ({
-    roles = ["admin", "moderator", "user", "invited"],
+    roles = [
+      { name: "invited", level: 0 },
+      { name: "basic", level: 1 },
+      { name: "admin", level: 10 },
+      { name: "moderator", level: 5 },
+    ],
     defaultRoleName = "invited",
   }) => {
     // import roles
-    const data = roles.map((name) => ({
-      name: name,
-      isDefault: name === defaultRoleName,
+    const data = roles.map((role) => ({
+      ...role,
+      isDefault: role.name === defaultRoleName,
     }));
 
     // set default role name
@@ -188,11 +245,13 @@ const getDatabaseConnection = () => {
     const data =
       productKeys.length > 0
         ? productKeys
-        : Array.from(Array(numberOfProductKeys), (v, k) => randomProductKey());
+        : Array.from(Array(numberOfProductKeys), (v, k) =>
+            ProductKey.generateKey()
+          );
 
     // create pseudo-documents
     const formattedData = data.map((key) => ({
-      key: key,
+      key,
       activationDate: randomDate(new Date(2022, 1, 1), new Date()),
       activated: Math.random() > 0.5,
       validityPeriod: randomNumber(1, 100) * 60, //in seconds
@@ -222,12 +281,102 @@ const getDatabaseConnection = () => {
       email: `user${idx}@test.com`,
       password: `passwordOfUser${idx}`,
       productKey: key,
-      roles: Array.from(
-        Array(randomNumber(1, roles.length)),
-        (v, k) => roles[randomNumber(0, roles.length - 1)]
-      ),
+      role: roles[randomNumber(0, roles.length - 1)].name,
     }));
     return formattedData;
+  };
+
+  const initDatabase = async (
+    method = "raw",
+    {
+      roleInput = "",
+      productKeyInput = "",
+      userInput = "",
+      coerceRole = true, //false,
+    }
+  ) => {
+    // prepare data to insert
+    let data = {};
+    switch (method) {
+      case "raw":
+        data = {
+          roles: resolveInput(roleInput),
+          productKeys: resolveInput(productKeyInput),
+          users: resolveInput(userInput),
+        };
+        console.log("--data raw", data);
+      case "json":
+        data = {
+          roles: formatRolesFromJson(roleInput),
+          productKeys: resolveInput(productKeyInput),
+          users: resolveInput(userInput),
+        };
+        console.log("--data json", data);
+        break;
+      case "random":
+        // random roles
+        const { roles, defaultRoleName } = resolveInput(roleInput);
+        const formattedRoles = formatRolesFromRandom({
+          roles,
+          defaultRoleName,
+        });
+        // random product keys
+        const { productKeys, numberOfProductKeys } = productKeyInput;
+        const [formattedProductKey, finalProductKeys] =
+          formatProductKeysFromRandom({
+            productKeys,
+            numberOfProductKeys,
+            returnList: true,
+          });
+        // random users
+        const { numberOfKeysUnused } = userInput;
+        const formattedUsers = formatUsersFromRandom({
+          roles,
+          productKeys: finalProductKeys,
+          numberOfKeysUnused,
+        });
+        data = {
+          roles: formattedRoles,
+          productKeys: formattedProductKey,
+          users: formattedUsers,
+        };
+        break;
+
+      default:
+        throw new Error("Unknow method. Unable to continue.");
+        break;
+    }
+
+    try {
+      console.log("initDatabase -- insertion ");
+      if (method === "raw") {
+        Role.insertFromData(data.roles);
+        ProductKey.insertFromData(data.productKeys);
+        User.insertFromData(data.users);
+      } else {
+        // TODO: bad idea how to have something not nested
+        Role.insertFromData(data.roles, (err, docs) => {
+          console.log("err role insert", err);
+          console.log("docs role insert", docs.length ? docs.length : 0);
+
+          ProductKey.insertFromData(data.productKeys, async (err, docs) => {
+            console.log("err pk insert", err);
+            console.log("docs pk insert", docs.length ? docs.length : 0);
+
+            console.log("data.users[0]", data.users[0]);
+            const userData = await formatUsersFromJson(data.users, coerceRole);
+            console.log("userdata", userData);
+            User.insertFromData(userData, (err, docs) => {
+              console.log("err user insert", err);
+              console.log("docs user insert", docs.length ? docs.length : 0);
+            });
+          });
+        });
+      }
+    } catch (error) {
+      throw new Error(`error during the ingestion phase:\n${error}`);
+    }
+    console.log("initDatabase -- end");
   };
 
   const dumpDatabase = async ({
@@ -265,138 +414,18 @@ const getDatabaseConnection = () => {
     // create directory if necessary
     fs.mkdir(absoluteOutputDir, { recursive: true }, async (err, pth) => {
       if (err) console.log("err on fullpathdir", err);
-
       for (let index = 0; index < availableModels.length; index++) {
-        //dumpData = async (outputDir)
+        const modelName = availableModels[index];
+        const model = connection.models[modelName];
+        const filename = path.join(pth, `${modelName}.json`);
         try {
-          const modelName = availableModels[index];
-          const model = connection.models[modelName];
-          const filename = path.join(pth, `${modelName}.json`);
-          const data = await model.find({});
-          const jsonData = JSON.stringify(data);
-          fs.writeFile(filename, jsonData, "utf-8", (err) => {
-            if (err) console.log(err);
-          });
+          await model.dumpData({ filename });
         } catch (error) {
           throw new Error(error.toString());
         }
       }
     });
     console.log("dumpDatabase -- end");
-  };
-
-  const initDatabase = async (
-    method = "raw",
-    {
-      roleInput = "",
-      productKeyInput = "",
-      userInput = "",
-      coerceRole = true, //false,
-    }
-  ) => {
-    // prepare data to insert
-    let data = {};
-    switch (method) {
-      case "raw":
-        data = {
-          roles: resolveInput(roleInput),
-          productKeys: resolveInput(productKeyInput),
-          users: resolveInput(userInput),
-        };
-      case "json":
-        data = {
-          roles: formatRolesFromJson(roleInput),
-          productKeys: resolveInput(productKeyInput),
-          users: resolveInput(userInput),
-        };
-        break;
-      case "random":
-        // random roles
-        const { roles, defaultRoleName } = resolveInput(roleInput);
-        const formattedRoles = formatRolesFromRandom({
-          roles,
-          defaultRoleName,
-        });
-
-        // random product keys
-        const { productKeys, numberOfProductKeys } = productKeyInput;
-        const [formattedProductKey, finalProductKeys] =
-          formatProductKeysFromRandom({
-            productKeys,
-            numberOfProductKeys,
-            returnList: true,
-          });
-
-        // random users
-        const { numberOfKeysUnused } = userInput;
-        const formattedUsers = formatUsersFromRandom({
-          roles,
-          productKeys: finalProductKeys,
-          numberOfKeysUnused,
-        });
-        data = {
-          roles: formattedRoles,
-          productKeys: formattedProductKey,
-          users: formattedUsers,
-        };
-        break;
-
-      default:
-        throw new Error("Unknow method. Unable to continue.");
-        break;
-    }
-    //console.log("Prepared data:", data);
-
-    try {
-      console.log("initDatabase -- insertion ");
-      if (method === "raw") {
-        const roles = await Role.insertMany(data.roles);
-        console.log(
-          roles instanceof Array
-            ? `${roles.length} documents added to the role collection.`
-            : "No roles added to the role collection"
-        );
-
-        const productKeys = await ProductKey.insertMany(data.productKeys);
-        console.log(
-          productKeys instanceof Array
-            ? `${productKeys.length} documents added to the productkeys collection.`
-            : "No document added to the collection productkeys"
-        );
-
-        const users = await User.insertMany(data.users);
-        console.log(
-          users instanceof Array
-            ? `${users.length} documents added to the users collection.`
-            : "No document added to the collection users"
-        );
-      } else {
-        const roles = await Role.insertMany(data.roles);
-        console.log(
-          roles instanceof Array
-            ? `${roles.length} documents added to the role collection.`
-            : "No roles added to the role collection"
-        );
-
-        const productKeys = await ProductKey.insertMany(data.productKeys);
-        console.log(
-          productKeys instanceof Array
-            ? `${productKeys.length} documents added to the productkeys collection.`
-            : "No document added to the collection productkeys"
-        );
-
-        const userData = await formatUsersFromJson(data.users, coerceRole);
-        const users = await User.insertMany(userData);
-        console.log(
-          users instanceof Array
-            ? `${users.length} documents added to the users collection.`
-            : "No document added to the collection users"
-        );
-      }
-    } catch (error) {
-      throw new Error(`error during the ingestion phase:\n${error}`);
-    }
-    console.log("initDatabase -- end");
   };
 
   // create output
@@ -406,8 +435,8 @@ const getDatabaseConnection = () => {
     User: User,
     ProductKey: ProductKey,
     Role: Role,
-    config,
-    addSuperAdminProductKey: addSuperAdminProductKey,
+    config: dbConfig,
+    addSuperAdminUser: addSuperAdminUser,
     initDatabase: initDatabase,
     dumpDatabase: dumpDatabase,
   };

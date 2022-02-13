@@ -1,5 +1,6 @@
 const express = require("express"); // Import express framework
 const { getRoutes } = require("./routes");
+const { resolveInput } = require("./utils");
 
 // thx https://github.com/kentcdodds/express-app-example
 const setupCloseOnExit = (server) => {
@@ -56,8 +57,7 @@ const startServer = async (port = process.env.PORT || 4000) => {
     process.env.DB_POPULATE_DATABASE &&
     process.env.DB_POPULATE_DATABASE === "true";
   if (populateDatabase) {
-    // main function
-    console.log("populate database -- start");
+    console.log("let's populate database");
     //const method = process.env.DATA_GENERATION_METHOD || "json";
     /* -- raw method -- *
     const method = "raw";
@@ -85,12 +85,11 @@ const startServer = async (port = process.env.PORT || 4000) => {
         "./data/random/product-keys.json",
       userInput:
         process.env.DB_GENERATION_OPTIONS_USER || "./data/random/users.json", //{ numberOfKeysUnused: 3 }
-      coerceRole: false,
+      coerceRole: true, //false,
     };
     console.log("chosen method:", method);
     console.log("chosen options:", populateDbOptions);
     await app.db.initDatabase(method, populateDbOptions);
-    console.log("populate database -- end");
   }
 
   // Make a dump of the database at the start of the app if necessary
@@ -108,13 +107,10 @@ const startServer = async (port = process.env.PORT || 4000) => {
   }
 
   // Add super admin product key
-  if (process.env.SUPER_ADMIN_PRODUCT_KEY) {
-    app.db.addSuperAdminProductKey({
-      key: process.env.SUPER_ADMIN_PRODUCT_KEY,
-      //activationDate: new Date(),
-      //activated: true,
-      //validityPeriod: 1 * 30 * 24 * 60 * 60, // in seconds aka 1 month
-    });
+  if (process.env.SUPER_ADMIN_INFO && false) {
+    const adminOptions = resolveInput(process.env.SUPER_ADMIN_INFO);
+    console.log(adminOptions);
+    app.db.addSuperAdminUser(adminOptions);
   }
 
   if (process.env.NODE_ENV && process.env.NODE_ENV !== "development") {
@@ -122,12 +118,12 @@ const startServer = async (port = process.env.PORT || 4000) => {
     app.get("*", (req, res) => {
       res.sendFile("build/index.html", { root: __dirname });
     });
-  }
 
-  // HELLO WORLD ROUTE
-  app.get("/hello-world", (req, res) => {
-    res.send({ express: "YOUR EXPRESS BACKEND IS ALIVE" });
-  });
+    // HELLO WORLD ROUTE
+    app.get("/hello-world", (req, res) => {
+      res.send({ express: "YOUR EXPRESS BACKEND IS ALIVE" });
+    });
+  }
 
   return new Promise((resolve) => {
     const server = app.listen(port, () => {

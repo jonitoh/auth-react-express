@@ -1,5 +1,6 @@
 [
-  { "name": "user", "isDefault": true },
-  { "name": "admin" },
-  { "name": "moderator" }
+  { "name": "invited", "level": 0 },
+  { "name": "basic", "level": 1, "isDefault": true },
+  { "name": "admin", "level": 10 },
+  { "name": "moderator", "level": 5 }
 ]

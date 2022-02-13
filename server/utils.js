@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const { Model } = require("mongoose"); // for a hack -- https://github.com/DefinitelyTyped/DefinitelyTyped/issues/33103#issuecomment-464355173
 
 const resolvePath = (input) => {
   if (path.isAbsolute(input)) {
@@ -13,7 +12,6 @@ const resolvePath = (input) => {
 
 const resolveInput = (input) => {
   if (input instanceof Array) {
-    //  || (typeof(input) === 'object' && input !== null)
     return input;
   } else if (typeof input === "string") {
     return require(resolvePath(input));
@@ -23,9 +21,6 @@ const resolveInput = (input) => {
     );
   }
 };
-
-const randomProductKey = () =>
-  "product-key-" + Math.round(Math.random() * 10000 + 1) + "-fake";
 
 const randomNumber = (start, end) =>
   Math.round(start + Math.random() * (end - start));
@@ -48,70 +43,53 @@ const formatDate = (date) =>
   "" +
   pad(date.getUTCSeconds());
 
-class BaseSchemaClass extends Model {
-  // for now, ut's in the class
-  static formatDate = (newDate) => formatDate(newDate);
-
-  // for now it's a virtual
-  get dumpFilename() {
-    return `dump-file-${this.formatDate(new Date())}.json`;
-  }
-
+class BaseSchemaClass {
   // `basicCallback` becomes a static
-  static basicCallback = (error, docs) => {
+  static basicCallback(error, docs) {
     if (error) console.log(error);
-    console.log(`${docs.length} documents added.`);
-    /*
-    docs.forEach((doc) => {
-      console.log(`added '${doc._id}' to collection`);
-    });
-    */
-  };
-
-  /* NOT WORKING 
-  // `insertFromData` becomes a static
-  static insertFromData = (
-    data,
-    cb = (error, docs) => {
-      if (error) console.log(error);
+    if (docs) {
       console.log(`${docs.length} documents added.`);
       /*
       docs.forEach((doc) => {
         console.log(`added '${doc._id}' to collection`);
       });
-      *
+      */
+    } else {
+      console.log("no documents");
     }
-  ) => this.insertMany(data, (error, docs) => cb(error, docs));
-  */
+  }
+
+  // `insertFromData` becomes a static
+  static insertFromData(data, cb = this.basicCallback) {
+    this.insertMany(data, cb);
+  }
 
   // `dumpData` becomes a static
-  static dumpData = async (outputDir, filename = this.dumpFilename) => {
+  static async dumpData({
+    filename,
+    filter = {},
+    projection = null,
+    options = {},
+    encoding = "utf-8",
+  }) {
     try {
-      const data = await this.find({});
-      const absoluteOutputDir = resolvePath(outputDir);
-      // check folder existence
-      fs.mkdir(absoluteOutputDir, { recursive: true }, (err, pth) => {
-        if (err) console.log(err);
-      });
-
-      const fullPath = path.join(absoluteOutputDir, filename);
-      fs.writeFile(fullPath, data, (err) => {
+      const data = await this.find(filter, projection, options);
+      const jsonData = JSON.stringify(data);
+      fs.writeFile(filename, jsonData, encoding, (err) => {
         if (err) console.log(err);
       });
     } catch (error) {
-      console.log(error);
+      console.log("error during dumping process");
       throw new Error(error.toString());
     }
-    console.log("data should be dumped by now");
-  };
+  }
 }
 
 module.exports = {
   resolveInput,
   resolvePath,
-  randomProductKey,
   randomNumber,
   randomDate,
-  BaseSchemaClass,
   formatDate,
+  BaseSchemaClass,
 };

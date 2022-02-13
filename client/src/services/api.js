@@ -3,6 +3,8 @@ import axios from "axios";
 // constants
 const API_URL = "http://localhost:3000/";
 
+// instance stuff
+
 // helper functions
 const authHeader = () => {
   const user = JSON.parse(localStorage.getItem("user"));

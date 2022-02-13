@@ -10,20 +10,20 @@ const getRouter = () => {
   router.use((req, res, next) => {
     res.header(
       "Access-Control-Allow-Headers",
-      "x-access-token, Origin, Content-Type, Accept"
+      "authorization, Origin, Content-Type, Accept"
     );
     next();
   });
 
   router.get(
     "/info/:userId",
-    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.getInfo
   );
 
   router.get(
     "/info",
-    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.getAllInfo
   );
 
@@ -31,31 +31,31 @@ const getRouter = () => {
 
   router.get(
     "/user",
-    [authJwt.verifyToken, authJwt.hasRole("user")],
+    [authJwt.authentificateToken, authJwt.hasAtLeastLevel(1)],
     controller.getUserStats
   );
 
   router.delete(
     "/user",
-    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.deleteUser
   );
 
   router.post(
     "/user",
-    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.modifyUser
   );
 
   router.get(
     "/mod",
-    [authJwt.verifyToken, authJwt.hasRole("moderator")],
+    [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.getModeratorStats
   );
 
   router.get(
     "/admin",
-    [authJwt.verifyToken, authJwt.hasRole("admin")],
+    [authJwt.authentificateToken, authJwt.hasRole("admin")],
     controller.getAdminStats
   );
 

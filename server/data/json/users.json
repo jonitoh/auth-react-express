@@ -3,26 +3,25 @@
     "username": "Darcy.Wins.94500",
     "email": "darcy.wincher@test.com",
     "password": "weak-password",
-    "productKey": "fake-key-0000005",
-    "roles": ["user", "moderator", "admin"]
+    "productKey": "1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
+    "role": "admin"
   },
   {
     "username": "Han the best",
     "email": "han77@test.com",
     "password": "faible-mot-de-passe",
-    "productKey": "fake-key-0000004",
-    "roles": ["user"]
+    "productKey": "109156be-c4fb-41ea-b1b4-efe1671c5836",
+    "role": "moderator"
   },
   {
     "email": "no-username@test.com",
     "password": "weak-passw0rd",
-    "productKey": "fake-key-0000003",
-    "roles": ["user", "moderator"]
+    "productKey": "1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
+    "role": "basic"
   },
   {
     "email": "lame-email@test.com",
     "password": "weak-passw0rd*",
-    "productKey": "fake-key-0000001",
-    "roles": []
+    "productKey": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
   }
 ]

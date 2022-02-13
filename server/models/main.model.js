@@ -40,94 +40,6 @@ const getDatabaseConnection = () => {
   );
   const Role = connection.model("role", require("../schemas/role.schema"));
 
-  const addSuperAdminUser = async ({
-    username = undefined,
-    email,
-    password,
-    productKey = undefined,
-    activationDate = new Date(),
-    activated = true,
-    validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
-  }) => {
-    // --- Product Key process
-    let productKeyId;
-
-    if (productKey) {
-      // check if the key is already here
-      const { isDuplicated, duplicateProductKey, errors } =
-        ProductKey.checkDuplicate(productKey);
-
-      // show potential errors
-      if (errors) {
-        console.log(errors);
-        return;
-      }
-
-      // check if the key is already stored
-      if (isDuplicated) {
-        console.log(
-          `Super admin product key has already been added and activated since ${duplicateProductKey.activationDate}.`
-        );
-        // check if a user is attached to it
-
-        User.find({ key: duplicateProductKey._id }, (err, users) => {
-          if (err) console.log(err);
-          if (users) {
-            throw new Error(
-              "This product key is alredy use. You can't use it "
-            );
-          } else {
-            productKeyId = duplicateProductKey._id;
-          }
-        });
-      }
-    }
-    if (!productKeyId) {
-      // new key to add
-      const newProductKey = new ProductKey({
-        key: productKey,
-        activationDate,
-        activated,
-        validityPeriod,
-      });
-      try {
-        const pk = await newProductKey.save();
-        productKeyId = pk._id;
-      } catch (error) {
-        throw new Error(`error on creation of Product Key:\n${err}`);
-      }
-    }
-    // --- Role process
-    let roleId;
-
-    // retrieve highest role
-    Role.find(
-      {},
-      { _id: 1, name: 1 },
-      { limit: 1, sort: { level: -1 } },
-      (err, highestRole) => {
-        if (err) console.log(err);
-        if (!highestRole)
-          throw new Error("No highest role found, check the database");
-        roleId = highestRole._id;
-      }
-    );
-
-    // --- User process
-    const user = new User({
-      username,
-      email,
-      password: await User.hashPassword(password),
-      productKey: productKeyId,
-      role: roleId,
-    });
-    user.save((err, user) => {
-      console.log("try there");
-      if (err) console.log(err);
-      if (!user) throw new Error("Problem during the creation of the user");
-    });
-    console.log("super admin created with the following id", user._id);
-  };
   // --- init database functions --- //
   // *** json has no ref nor _id
   const formatRolesFromJson = (input) => {
@@ -414,18 +326,115 @@ const getDatabaseConnection = () => {
     // create directory if necessary
     fs.mkdir(absoluteOutputDir, { recursive: true }, async (err, pth) => {
       if (err) console.log("err on fullpathdir", err);
-      for (let index = 0; index < availableModels.length; index++) {
-        const modelName = availableModels[index];
-        const model = connection.models[modelName];
-        const filename = path.join(pth, `${modelName}.json`);
-        try {
-          await model.dumpData({ filename });
-        } catch (error) {
-          throw new Error(error.toString());
-        }
-      }
+      console.log(
+        `folder already exists ? ${pth ? `true at ${pth}` : "false"}`
+      );
     });
+
+    // create dump files
+    for (let index = 0; index < availableModels.length; index++) {
+      const modelName = availableModels[index];
+      const model = connection.models[modelName];
+      const filename = path.join(absoluteOutputDir, `${modelName}.json`);
+      try {
+        console.log(`Dump file at ${filename} from model ${modelName}`);
+        await model.dumpData({ filename });
+      } catch (error) {
+        throw new Error(error.toString());
+      }
+    }
+
+    // end
     console.log("dumpDatabase -- end");
+  };
+
+  const addSuperAdminUser = async ({
+    username = undefined,
+    email,
+    password,
+    productKey = undefined,
+    activationDate = new Date(),
+    activated = true,
+    validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
+  }) => {
+    // --- Product Key process
+    let productKeyId;
+
+    if (productKey) {
+      // check if the key is already here
+      const { isDuplicated, duplicateProductKey, errors } =
+        ProductKey.checkDuplicate(productKey);
+
+      // show potential errors
+      if (errors) {
+        console.log(errors);
+        return;
+      }
+
+      // check if the key is already stored
+      if (isDuplicated) {
+        console.log(
+          `Super admin product key has already been added and activated since ${duplicateProductKey.activationDate}.`
+        );
+        // check if a user is attached to it
+
+        User.find({ key: duplicateProductKey._id }, (err, users) => {
+          if (err) console.log(err);
+          if (users) {
+            throw new Error(
+              "This product key is alredy use. You can't use it "
+            );
+          } else {
+            productKeyId = duplicateProductKey._id;
+          }
+        });
+      }
+    }
+    if (!productKeyId) {
+      // new key to add
+      const newProductKey = new ProductKey({
+        key: productKey,
+        activationDate,
+        activated,
+        validityPeriod,
+      });
+      try {
+        const pk = await newProductKey.save();
+        productKeyId = pk._id;
+      } catch (error) {
+        throw new Error(`error on creation of Product Key:\n${err}`);
+      }
+    }
+    // --- Role process
+    let roleId;
+
+    // retrieve highest role
+    Role.find(
+      {},
+      { _id: 1, name: 1 },
+      { limit: 1, sort: { level: -1 } },
+      (err, highestRole) => {
+        if (err) console.log(err);
+        if (!highestRole)
+          throw new Error("No highest role found, check the database");
+        roleId = highestRole._id;
+      }
+    );
+
+    // --- User process
+    const user = new User({
+      username,
+      email,
+      password: await User.hashPassword(password),
+      productKey: productKeyId,
+      role: roleId,
+    });
+    user.save((err, user) => {
+      console.log("try there");
+      if (err) console.log(err);
+      if (!user) throw new Error("Problem during the creation of the user");
+    });
+    console.log("super admin created with the following id", user._id);
   };
 
   // create output

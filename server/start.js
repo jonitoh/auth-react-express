@@ -62,29 +62,29 @@ const startServer = async (port = process.env.PORT || 4000) => {
     /* -- raw method -- *
     const method = "raw";
     const populateDbOptions = {
-      roleInput:  process.env.DB_GENERATION_OPTIONS_ROLE || "./data/raw/roles.json",
-      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./data/raw/product-keys.json",
-      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./data/raw/users.json",
+      roleInput:  process.env.DB_GENERATION_OPTIONS_ROLE || "./data/raw/role.json",
+      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./data/raw/productkey.json",
+      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./data/raw/user.json",
       coerceRole: false,
     }*/
     /* -- json method -- /
     const method = "json";
     const populateDbOptions = {
-      roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./data/json/roles.json",
-      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./data/json/product-keys.json",
-      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./data/json/users.json",
+      roleInput: process.env.DB_GENERATION_OPTIONS_ROLE || "./data/json/role.json",
+      productKeyInput: process.env.DB_GENERATION_OPTIONS_PRODUCTKEY || "./data/json/productkey.json",
+      userInput: process.env.DB_GENERATION_OPTIONS_USER || "./data/json/user.json",
       coerceRole: true,
     }*/
     /* -- random method -- */
     const method = "random";
     const populateDbOptions = {
       roleInput:
-        process.env.DB_GENERATION_OPTIONS_ROLE || "./data/random/roles.json",
+        process.env.DB_GENERATION_OPTIONS_ROLE || "./data/random/role.json",
       productKeyInput:
         process.env.DB_GENERATION_OPTIONS_PRODUCTKEY ||
-        "./data/random/product-keys.json",
+        "./data/random/product-key.json",
       userInput:
-        process.env.DB_GENERATION_OPTIONS_USER || "./data/random/users.json", //{ numberOfKeysUnused: 3 }
+        process.env.DB_GENERATION_OPTIONS_USER || "./data/random/user.json", //{ numberOfKeysUnused: 3 }
       coerceRole: true, //false,
     };
     console.log("chosen method:", method);
@@ -107,7 +107,7 @@ const startServer = async (port = process.env.PORT || 4000) => {
   }
 
   // Add super admin product key
-  if (process.env.SUPER_ADMIN_INFO && false) {
+  if (process.env.SUPER_ADMIN_INFO) {
     const adminOptions = resolveInput(process.env.SUPER_ADMIN_INFO);
     console.log(adminOptions);
     app.db.addSuperAdminUser(adminOptions);

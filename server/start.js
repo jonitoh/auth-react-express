@@ -48,7 +48,7 @@ const startServer = async (port = process.env.PORT || 4000) => {
   app.use("/", getRoutes());
 
   // Import database and check it's working
-  const { db } = require("./models");
+  const db = require("./models");
   app.db = db;
   console.log("check readyState", app.db.conn.readyState);
 

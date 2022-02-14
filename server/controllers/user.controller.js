@@ -1,7 +1,7 @@
-const { User, ProductKey } = require("../models");
+const { User } = require("../models");
 const { handleMessageForResponse } = require("../utils");
 
-const deleteUser = (req, res) => {
+const deleteUser = async (req, res) => {
   const { id: userId } = req.params;
   try {
     const deleted = await User.deleteOne({ _id: userId });
@@ -14,7 +14,7 @@ const deleteUser = (req, res) => {
   }
 };
 
-const getInfo = (req, res) => {
+const getInfo = async (req, res) => {
   const { id: userId } = req.params;
   try {
     const user = await User.findById(userId).lean();
@@ -27,7 +27,7 @@ const getInfo = (req, res) => {
   }
 };
 
-const getAllInfo = (req, res) => {
+const getAllInfo = async (req, res) => {
   try {
     const users = await User.find({});
     if (!users) {

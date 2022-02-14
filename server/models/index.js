@@ -8,4 +8,4 @@ try {
   process.exit();
 }
 
-module.exports = { db };
+module.exports = db;

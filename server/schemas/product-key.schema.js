@@ -1,6 +1,6 @@
 const { Schema } = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
-const { BaseSchemaClass } = require("../utils");
+const { BaseSchemaClass, handleErrorForLog } = require("../utils");
 
 const randomProductKey = () => uuidv4();
 
@@ -10,7 +10,10 @@ const productKeySchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      default: randomProductKey,
+      default: function () {
+        this.generateKey();
+      }, //randomProductKey,
+      immutable: true,
     },
     activationDate: {
       type: Date,
@@ -20,7 +23,7 @@ const productKeySchema = new Schema(
     activated: {
       type: Boolean,
       required: true,
-      default: false,
+      default: true,
     },
     validityPeriod: {
       type: Number,
@@ -28,6 +31,7 @@ const productKeySchema = new Schema(
       default: 60 * 60, // in seconds
     },
   },
+  { collection: "productkey" },
   { timestamps: true } // createdAt & updatedAt
 );
 
@@ -39,7 +43,11 @@ class SchemaClass extends BaseSchemaClass {
 
   // `findByKey` becomes a static
   static async findByKey(key) {
-    return await this.findOne({ key });
+    try {
+      return await this.findOne({ key });
+    } catch (error) {
+      handleErrorForLog(error, "couldn't find product key by key");
+    }
   }
 
   // `activate` becomes a document method
@@ -53,6 +61,26 @@ class SchemaClass extends BaseSchemaClass {
     this.activated = false;
   }
 
+  // `isInUse` becomes a document method
+  isInUse() {
+    const isActivated = this.activated;
+    const isValid = this.isValid;
+    const isInUse = isActivated && isValid;
+    let message;
+    if (!isActivated) {
+      message = "DEACTIVATED_PRODUCT_KEY";
+    }
+    if (!isValid) {
+      message = "NON_VALID_PRODUCT_KEY";
+    }
+
+    if (!isActivated && !isValid) {
+      message = "DEACTIVATED_PRODUCT_KEY || NON_VALID_PRODUCT_KEY";
+    }
+
+    return [isInUse, message];
+  }
+
   // `isValid` becomes a virtual
   get isValid() {
     return (
@@ -61,15 +89,18 @@ class SchemaClass extends BaseSchemaClass {
     );
   }
 
-  // `checkDuplicate` becomes a static
-  static checkDuplicate(key) {
-    const res = this.findOne({ key }, (errors, duplicated) => {
-      console.log("show me", [errors, duplicated]);
-      const isDuplicated = !!duplicated;
-      return { isDuplicated, duplicated, errors };
-    });
-    console.log("res", res);
-    return res;
+  // `checkIfStored` becomes a static
+  static async checkIfStored(key) {
+    let errorMsg = null;
+    let storedProductKey = null;
+    let isStored = false;
+    try {
+      storedProductKey = await this.findOne({ key });
+      isStored = !!storedProductKey;
+    } catch (error) {
+      errorMsg = error.message;
+    }
+    return { isStored, storedProductKey, errorMsg };
   }
 }
 

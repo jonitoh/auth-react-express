@@ -44,7 +44,7 @@ const getRouter = () => {
   router.post(
     "/user",
     [authJwt.authentificateToken, authJwt.hasRole("moderator")],
-    controller.modifyUser
+    controller.updateUser
   );
 
   router.get(

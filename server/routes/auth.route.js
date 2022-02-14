@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerUser } = require("../middlewares");
+//const { registerUser } = require("../middlewares");
 const controller = require("../controllers/auth.controller");
 
 const getRouter = () => {
@@ -18,11 +18,11 @@ const getRouter = () => {
   // Sign Up
   router.post(
     "/signup",
-    [
+    /*[
       registerUser.checkDuplicateUsernameOrEmail,
-      registerUser.checkDuplicateProductKey,
+      registerUser.checkProductKeyStored,
       registerUser.checkRoleExisted,
-    ],
+    ],*/
     controller.signup
   );
 

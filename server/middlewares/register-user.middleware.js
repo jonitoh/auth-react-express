@@ -1,99 +1,79 @@
-const { Role, User } = require("../models");
+const { Role, User, ProductKey } = require("../models");
+const { handleMessageForResponse } = require("../utils");
 
-checkDuplicateUsernameOrEmail = (req, res, next) => {
-  if (req.body.email) {
+checkDuplicateUsernameOrEmail = async (req, res, next) => {
+  try {
+    let isUserExists = false;
+
     // check email
-    User.findOne(
-      {
-        email: req.body.email,
-      },
-      (err, user) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-        if (user) {
-          res.status(400).send({ message: "USED_EMAIL" });
-          return;
-        }
-      }
-    );
-  } else if (req.body.username) {
+    if (req.body.email) {
+      isUserExists = await User.exists({ email: req.body.email });
+    }
+
     // check username
-    User.findOne(
-      {
-        username: req.body.username,
-      },
-      (err, user) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-        if (user) {
-          res.status(400).send({ message: "USED_USERNAME" });
-          return;
-        }
-      }
-    );
-  } else {
-    // we have a problem
-    res.status(500).send({
-      message: "UNFOUND_USERNAME_OR_EMAIL",
-    });
-    return;
+    if (!isUserExists && req.body.username) {
+      isUserExists = await User.exists({ username: req.body.username });
+    }
+
+    if (isUserExists) {
+      return handleMessageForResponse("USED_CREDENTIALS", res, 400);
+    }
+    // go back to business
+    return next();
+  } catch (error) {
+    return handleMessageForResponse(error, res, 500);
   }
-  // go back to business
-  next();
 };
 
-checkDuplicateProductKey = (req, res, next) => {
-  // check if the key is already here
-  const { isDuplicated, duplicateProductKey, errors } =
-    ProductKey.checkDuplicate(req.body.productKey);
+checkProductKeyStored = async (req, res, next) => {
+  const { productKey } = req.body;
+  try {
+    const { isStored, storedProductKey, errorMsg } =
+      ProductKey.checkIfStored(productKey);
 
-  // show potential errors
-  if (errors) {
-    res.status(500).send({ message: errors });
-    return;
-  }
-
-  // check if the key is already stored
-  if (!isDuplicated) {
-    res.status(500).send({
-      message: "UNKNOWN_PRODUCT_KEY",
-    });
-    return;
-  }
-
-  User.findOne(
-    {
-      productKey: duplicateProductKey._id,
-    },
-    (err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-      if (user) {
-        res.status(400).send({ message: "USED_PRODUCT_KEY" });
-        return;
-      }
-      next();
+    if (errorMsg) {
+      return handleMessageForResponse(errorMsg, res, 500);
     }
-  );
+
+    if (!isStored) {
+      return handleMessageForResponse("UNKNOWN_PRODUCT_KEY", res, 500);
+    }
+
+    if (!req.checks) {
+      req.checks = {};
+    }
+    req.checks = { ...req.checks, productKey: storedProductKey };
+    return next();
+  } catch (error) {
+    return handleMessageForResponse(error, res, 500);
+  }
 };
 
-checkRoleExisted = (req, res, next) => {
-  if (req.body.role) {
-    const allRoles = Role.allRoles().map(({ name }) => name);
-    if (!allRoles.includes(req.body.role)) {
-      res.status(400).send({
-        message: "UNKNOWN_ROLE",
-      });
-      return;
+checkRoleExisted = async (req, res, next) => {
+  const { role: roleName, roleId, forceRole } = req.body;
+  try {
+    // --- Check for the role and if it's okay add it to the new user
+    const { isRoleFound, id, name, error } = await Role.checkRole({
+      id: roleId,
+      name: roleName,
+      forceRole,
+    });
+
+    if (error) {
+      return handleMessageForResponse(error, res, 500);
     }
+
+    if (!isRoleFound) {
+      return handleMessageForResponse("NO_ROLE_FOUND", res, 500);
+    }
+    if (!req.checks) {
+      req.checks = {};
+    }
+    req.checks = { ...req.checks, role: { id, name } };
+    return next();
+  } catch (error) {
+    return handleMessageForResponse(error, res, 500);
   }
-  next();
 };
 
 module.exports = {

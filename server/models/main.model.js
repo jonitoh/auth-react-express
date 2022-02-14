@@ -5,6 +5,8 @@ const {
   randomDate,
   resolvePath,
   formatDate,
+  CustomError,
+  handleErrorForLog,
 } = require("./../utils");
 const path = require("path");
 const fs = require("fs");
@@ -40,6 +42,47 @@ const getDatabaseConnection = () => {
   );
   const Role = connection.model("role", require("../schemas/role.schema"));
 
+  // create helper function based on models
+  const checkProductKey = async (productKey) => {
+    // init variables
+    let isStored = false;
+    let storedProductKey = null;
+    let isInUse = true;
+    let isInUseMsg;
+    let isLinkedToUser = false;
+    let linkedUser = null;
+    let error = new CustomError();
+    try {
+      // is productKey already stored
+      const ifStoredProductKey = ProductKey.checkIfStored(productKey);
+      isStored = ifStoredProductKey.isStored;
+      storedProductKey = ifStoredProductKey.storedProductKey;
+      error.add(ifStoredProductKey.errorMsg);
+
+      if (isStored) {
+        // check if the product key is in use: activated and still valid
+        [isInUse, isInUseMsg] = storedProductKey.isInUse();
+
+        // check if the productKey is used by a user
+        linkedUser = await User.find({ key: duplicated._id });
+      }
+    } catch (err) {
+      error.add(err);
+    }
+    return {
+      isStored,
+      storedProductKey,
+      isInUse,
+      isInUseMsg,
+      isLinkedToUser,
+      linkedUser,
+      error: error.message,
+    };
+  };
+
+  const helpers = {
+    checkProductKey,
+  };
   // --- init database functions --- //
   // *** json has no ref nor _id
   const formatRolesFromJson = (input) => {
@@ -64,19 +107,13 @@ const getDatabaseConnection = () => {
     const data = resolveInput(input);
     // helpers
     const mapToProductKeyId = async (key) => {
-      //const all = await ProductKey.find({});
-      //console.log("allPK", all.length ? all.length : 0);
-      const pk = await ProductKey.findOne({ key });
-      //console.log("mapped pk", pk ? pk._id : undefined);
-      return pk ? pk._id : undefined;
+      const { _id } = await ProductKey.findOne({ key }).select("_id").lean();
+      return _id;
     };
 
     const mapToRoleId = async (name) => {
-      //const all = await Role.find({});
-      //console.log("allR", all.length ? all.length : 0);
-      const role = await Role.findOne({ name });
-      //console.log("mapped role", role ? role._id : undefined);
-      return role ? role._id : undefined;
+      const { _id } = await Role.findOne({ name }).select("_id").lean();
+      return _id;
     };
 
     const formattedData = [];
@@ -256,7 +293,6 @@ const getDatabaseConnection = () => {
 
       default:
         throw new Error("Unknow method. Unable to continue.");
-        break;
     }
 
     try {
@@ -353,115 +389,108 @@ const getDatabaseConnection = () => {
     email,
     password,
     productKey = undefined,
-    activationDate = new Date(),
+    activationDate = undefined,
     activated = true,
     validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
   }) => {
     console.log("@@ start");
-    // --- Product Key process
-    let productKeyId;
-    console.log("@@ start productKeyId", productKeyId);
+    try {
+      let productKeyDoc;
+      let roleDoc;
 
-    console.log("@@ pk?", productKey);
-    if (productKey) {
-      console.log("@@ into check pk");
-      // check if the key is already here
-      const { isDuplicated, duplicateProductKey, errors } =
-        ProductKey.checkDuplicate(productKey);
-      console.log("result", { isDuplicated, duplicateProductKey, errors });
-      // show potential errors
-      if (errors) {
-        console.log(errors);
-        return;
-      }
-
-      // check if the key is already stored
-      if (isDuplicated) {
-        console.log(
-          `Super admin product key has already been added and activated since ${duplicateProductKey.activationDate}.`
-        );
-        // check if a user is attached to it
-
-        User.find({ key: duplicateProductKey._id }, (err, users) => {
-          if (err) console.log(err);
-          if (users) {
-            throw new Error(
-              "This product key is alredy use. You can't use it "
-            );
-          } else {
-            productKeyId = duplicateProductKey._id;
-          }
+      // retrieve productKeyDoc
+      if (!productKey) {
+        // new key to add
+        const newProductKey = new ProductKey({
+          key: productKey,
+          activationDate,
+          activated,
+          validityPeriod,
         });
+        productKeyDoc = await newProductKey.save().lean();
       } else {
-        console.log("Product key not registered");
-      }
-    }
-    if (!productKeyId) {
-      // new key to add
-      const newProductKey = new ProductKey({
-        key: productKey,
-        activationDate,
-        activated,
-        validityPeriod,
-      });
-      try {
-        const pk = await newProductKey.save();
-        productKeyId = pk._id;
-      } catch (error) {
-        console.log(error);
-        throw new Error(`error on creation of Product Key:\n${err}`);
-      }
-    }
-    console.log("@@ final pkid", productKeyId);
-    // --- Role process
-    let roleId;
-    console.log("@@ roleId start", roleId);
+        const {
+          isStored,
+          storedProductKey,
+          isInUse,
+          isLinkedToUser,
+          linkedUser,
+          error,
+        } = await checkProductKey(productKey);
 
-    // retrieve highest role
-    Role.find(
-      {},
-      { _id: 1, name: 1 },
-      { limit: 1, sort: { level: -1 } },
-      (err, highestRole) => {
-        console.log("@@ highest?", highestRole);
-        if (err) console.log(err);
-        if (highestRole) {
-          roleId = highestRole._id;
-        } else {
-          throw new Error("No highest role found, check the database");
+        if (error) {
+          return handleErrorForLog(error);
         }
-      }
-    );
-    console.log("@@ final roleId", roleId);
 
-    // --- User process
-    const user = new User({
-      username,
-      email,
-      password: await User.hashPassword(password),
-      productKey: productKeyId,
-      role: roleId,
-    });
-    user.save((err, user) => {
-      console.log("try there");
-      if (err) console.log(err);
-      if (!user) throw new Error("Problem during the creation of the user");
-    });
-    console.log("super admin created with the following id", user._id);
-    console.log("@@ user", user);
+        if (!isStored) {
+          return handleErrorForLog("UNKNOWN_PRODUCT_KEY");
+        }
+
+        if (isLinkedToUser) {
+          const isSamePassword = await linkedUser.checkPassword(password);
+          // CHECK IF SAME USER
+          if (isSamePassword && linkedUser.email === email) {
+            console.log("Super admin already registered");
+            if (!isInUse) {
+              storedProductKey.activate(activationDate);
+              await storedProductKey.save();
+            }
+          }
+          return handleErrorForLog(
+            "REGISTERED_PRODUCT_KEY_TO_ANOTHER_USER",
+            res,
+            500
+          );
+        }
+        productKeyDoc = storedProductKey;
+      }
+      console.log("@@ final pkdoc", productKeyDoc);
+
+      // retrieve roleDoc
+      roleDoc = await Role.find(
+        {},
+        { _id: 1, name: 1 },
+        { limit: 1, sort: { level: -1 } }
+      ).lean();
+
+      if (!roleDoc) {
+        return handleErrorForLog("UNFOUND_HIGHEST_ROLE");
+      }
+      console.log("@@ final roledoc", roleDoc);
+
+      // create user
+      const user = new User({
+        username,
+        email,
+        password: await User.hashPassword(password),
+        productKey: productKeyDoc._id,
+        role: roleDoc._id,
+      });
+
+      const userDoc = user.save().lean();
+
+      if (!userDoc) {
+        return handleErrorForLog("NEW_USER_NOT_CREATED");
+      }
+      console.log("@@ final userdoc", userDoc);
+      return;
+    } catch (error) {
+      return handleErrorForLog(error);
+    }
   };
 
   // create output
   const db = {
-    mongoose: mongoose,
-    conn: connection,
-    User: User,
-    ProductKey: ProductKey,
-    Role: Role,
+    mongoose,
     config: dbConfig,
-    addSuperAdminUser: addSuperAdminUser,
-    initDatabase: initDatabase,
-    dumpDatabase: dumpDatabase,
+    conn: connection,
+    User,
+    ProductKey,
+    Role,
+    helpers,
+    addSuperAdminUser,
+    initDatabase,
+    dumpDatabase,
   };
 
   return db;

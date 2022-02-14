@@ -43,30 +43,86 @@ const formatDate = (date) =>
   "" +
   pad(date.getUTCSeconds());
 
-function handleError(error) {
+const handleErrorForLog = (error, priorMessage = "", strictMode = false) => {
+  if (priorMessage) {
+    console.log(priorMessage);
+  }
   console.error(`Error ${error}\n${error.stack}`);
-  process.exit(2);
-}
+  if (strictMode) {
+    process.exitCode = 2;
+    throw new Error(error.message);
+  }
+};
 
-class BaseSchemaClass {
-  // `basicCallback` becomes a static
-  static basicCallback(error, docs) {
-    if (error) console.log(error);
-    if (docs) {
-      console.log(`${docs.length} documents added.`);
-      /*
-      docs.forEach((doc) => {
-        console.log(`added '${doc._id}' to collection`);
-      });
-      */
-    } else {
-      console.log("no documents");
+const handleMessageForResponse = (obj, res, code = 500, priorMessage = "") => {
+  if (priorMessage) {
+    console.log(priorMessage);
+  }
+  let message;
+  if (obj instanceof Error) {
+    message = obj.message;
+  }
+  if (typeof obj === "string") {
+    message = obj;
+  }
+  res.status(code).send({ message });
+  return;
+};
+
+class CustomError {
+  constructor(errors) {
+    this._separator = " || ";
+    this._errors = [];
+    if (typeof errors === "string") {
+      this._errors.push(errors);
+    }
+    if (errors instanceof Array) {
+      this.errors = [...errors];
     }
   }
 
+  get separator() {
+    return this._separator;
+  }
+
+  set separator(separator) {
+    this._separator = separator;
+  }
+
+  add(error) {
+    if (!!error) {
+      if (error instanceof Error) {
+        this._errors.push(error.message);
+        return;
+      }
+      this._errors.push(error);
+    }
+  }
+
+  get message() {
+    return this.list.join(this.separator);
+  }
+
+  get list() {
+    return this._errors.filter((e) => !!e);
+  }
+}
+
+// cf. https://www.digitalocean.com/community/tutorials/js-capitalizing-strings
+const capitalize = (string) =>
+  string
+    .trim()
+    .toLowerCase()
+    .replace(/\w\S*/g, (w) => w.replace(/^\w/, (c) => c.toUpperCase()));
+
+class BaseSchemaClass {
   // `insertFromData` becomes a static
-  static insertFromData(data, cb = this.basicCallback) {
-    this.insertMany(data, cb);
+  static async insertFromData(data) {
+    try {
+      await this.insertMany(data);
+    } catch (e) {
+      handleErrorForLog(e);
+    }
   }
 
   // `dumpData` becomes a static
@@ -84,8 +140,7 @@ class BaseSchemaClass {
         if (err) console.log(err);
       });
     } catch (error) {
-      console.log("error during dumping process");
-      throw new Error(error.toString());
+      handleErrorForLog(error, "Error during dumping process");
     }
   }
 }
@@ -97,4 +152,8 @@ module.exports = {
   randomDate,
   formatDate,
   BaseSchemaClass,
+  handleErrorForLog,
+  handleMessageForResponse,
+  CustomError,
+  capitalize,
 };

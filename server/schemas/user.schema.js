@@ -1,5 +1,5 @@
 const { Schema } = require("mongoose");
-const { BaseSchemaClass } = require("../utils");
+const { BaseSchemaClass, capitalize, handleErrorForLog } = require("../utils");
 const bcrypt = require("bcrypt");
 
 const userSchema = new Schema(
@@ -7,7 +7,6 @@ const userSchema = new Schema(
     username: {
       type: String,
       required: false,
-      default: "unknown user",
     },
     email: {
       type: String,
@@ -32,34 +31,75 @@ const userSchema = new Schema(
       ref: "Role",
     },
   },
+  { collection: "user" },
   { timestamps: true } // createdAt & updatedAt
 );
 
 class SchemaClass extends BaseSchemaClass {
   // `salt` becomes a virtual
   get salt() {
-    if (!this._salt) {
-      bcrypt.genSalt(process.env.SALT_ROUNDS || 10, function (err, salt) {
-        if (err) throw new Error(`error during genSalt:\n${err}`);
-        this._salt = salt;
-      });
+    return (async function () {
+      if (!this._salt) {
+        try {
+          this._salt = await bcrypt.genSalt(process.env.SALT_ROUNDS || 10);
+        } catch (error) {
+          handleErrorForLog(
+            error,
+            "Error in setting salt paramater for password hashing process in User"
+          );
+        }
+      }
+      return this._salt;
+    })();
+  }
+
+  // `currentUsername`becomes a virtual
+  get currentUsername() {
+    return this.username || capitalize(this.email.split("@")[0]);
+  }
+
+  // `toResponseJson` becomes a document method
+  toResponseJson(
+    properties,
+    keepPassword = false,
+    objectOptions = { versionKey: false }
+  ) {
+    const user = { ...this.toObject(objectOptions), ...properties };
+    if (keepPassword) {
+      delete user.password;
     }
-    return this._salt;
+    // add other properties
+    user.hasUsername = !!user.username;
+    user.username = this.currentUsername;
+
+    return user;
   }
 
   // `checkPassword` becomes a document method
   async checkPassword(password) {
-    return await bcrypt.compare(password, this.password);
+    try {
+      return await bcrypt.compare(password, this.password);
+    } catch (error) {
+      handleErrorForLog(error, "Error during the check password process");
+    }
   }
 
   // `findByEmail` becomes a static
   static async findByEmail(email) {
-    return await this.findOne({ email });
+    try {
+      return await this.findOne({ email });
+    } catch (error) {
+      handleErrorForLog(error, "couldn't find user by email");
+    }
   }
 
   // `hashPassword` becomes a static
   static async hashPassword(password) {
-    return await bcrypt.hash(password, this.salt);
+    try {
+      return await bcrypt.hash(password, this.salt);
+    } catch (error) {
+      handleErrorForLog(error, "couldn't hash the password");
+    }
   }
 }
 

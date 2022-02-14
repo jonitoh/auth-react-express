@@ -195,6 +195,8 @@ This project is released under the terms of the [MIT License](LICENSE).
 
 - [intro mongoose] (https://www.freecodecamp.org/news/introduction-to-mongoose-for-mongodb-d2a7aa593c57/) for those who prefer read a short introduction before dive in the doc
 
+- [advice with that async ish in mongoose] (https://www.freecodecamp.org/news/mongodb-mongoose-node-tutorial/)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

@@ -127,7 +127,8 @@ In preparation.
 - [ ]
 - [ ]
 - [ ]
-- [ ] - [x]
+- [ ]
+  - [x]
   - [x]
 
 <!-- back to top -->
@@ -179,9 +180,16 @@ This project is released under the terms of the [MIT License](LICENSE).
 # <a id="acknowledgments">❤️&nbsp;</a> Acknowledgments
 
 🏆 Here are the nominees, with no particular order, in the category for **_best resources used for this project_**:
+front end
 
 - [Chakra UI](https://chakra-ui.com/)
 - [How to create forms with Chakra UI in React apps](https://blog.logrocket.com/how-to-create-forms-with-chakra-ui-in-react-apps/): very detailed article
+
+- [color mode] (https://dev.to/carwack/the-one-with-chakra-ui-vue-and-color-palette-switching-68e)
+
+---
+
+back end
 
 - [jsconfig.json usage](https://saurabhshah23.medium.com/react-app-with-absolute-paths-using-jsconfig-json-2b07b1cb24d4)
 
@@ -198,6 +206,8 @@ This project is released under the terms of the [MIT License](LICENSE).
 - [advice with that async ish in mongoose] (https://www.freecodecamp.org/news/mongodb-mongoose-node-tutorial/)
 
 - [potential workaound for async getter] (https://medium.com/trabe/async-getters-and-setters-is-it-possible-c18759b6f7e4)
+
+- [astuce mongoose] (https://simplernerd.com/mongoose-id-exists/)
 
 <!-- back to the top -->
 <p align="right">

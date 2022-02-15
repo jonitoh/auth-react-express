@@ -1,7 +1,7 @@
 const { Role, User, ProductKey } = require("../models");
 const { handleMessageForResponse } = require("../utils");
 
-checkDuplicateUsernameOrEmail = async (req, res, next) => {
+checkDuplicateWithUsernameOrEmail = async (req, res, next) => {
   try {
     let isUserExists = false;
 
@@ -47,21 +47,18 @@ checkProductKeyStored = async (req, res, next) => {
       return handleMessageForResponse("UNKNOWN_PRODUCT_KEY", res, 500);
     }
 
-    if (!req.checks) {
-      req.checks = {};
-    }
-    req.checks = { ...req.checks, productKey: storedProductKey };
+    req.checks = { ...req.checks, productKeyDoc: storedProductKey };
     return next();
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
   }
 };
 
-checkRoleExisted = async (req, res, next) => {
+checkRoleExists = async (req, res, next) => {
   const { role: roleName, roleId, forceRole } = req.body;
   try {
     // --- Check for the role and if it's okay add it to the new user
-    const { isRoleFound, id, name, error } = await Role.checkRole({
+    const { isRoleFound, role, error } = await Role.checkRole({
       id: roleId,
       name: roleName,
       forceRole,
@@ -74,10 +71,8 @@ checkRoleExisted = async (req, res, next) => {
     if (!isRoleFound) {
       return handleMessageForResponse("NO_ROLE_FOUND", res, 500);
     }
-    if (!req.checks) {
-      req.checks = {};
-    }
-    req.checks = { ...req.checks, role: { id, name } };
+
+    req.checks = { ...req.checks, roleDoc: role };
     return next();
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
@@ -85,7 +80,7 @@ checkRoleExisted = async (req, res, next) => {
 };
 
 module.exports = {
-  checkDuplicateUsernameOrEmail,
-  checkDuplicateProductKey,
-  checkRoleExisted,
+  checkDuplicateWithUsernameOrEmail,
+  checkProductKeyStored,
+  checkRoleExists,
 };

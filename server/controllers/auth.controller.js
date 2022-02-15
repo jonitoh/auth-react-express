@@ -8,24 +8,18 @@ const jwt = require("jsonwebtoken");
 const { handleMessageForResponse } = require("../utils");
 
 const generateAccessToken = (user) => {
-  const token = jwt.sign(
-    { id: user.id, role: user.role }, // user.role is an id too
-    authConfig.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: authConfig.ACCESS_TOKEN_EXPIRATION,
-    }
-  );
+  const { id: _id, role } = user; // role here is an ID
+  const token = jwt.sign({ id, role }, authConfig.ACCESS_TOKEN_SECRET, {
+    expiresIn: authConfig.ACCESS_TOKEN_EXPIRATION,
+  });
   return token;
 };
 
 const generateRefreshToken = (user) => {
-  const token = jwt.sign(
-    { id: user.id, role: user.role }, // user.role is an id too
-    authConfig.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: authConfig.REFRESH_TOKEN_EXPIRATION,
-    }
-  );
+  const { id: _id, role } = user; // role here is an ID
+  const token = jwt.sign({ id, role }, authConfig.REFRESH_TOKEN_SECRET, {
+    expiresIn: authConfig.REFRESH_TOKEN_EXPIRATION,
+  });
   return token;
 };
 
@@ -49,7 +43,8 @@ const refreshToken = (req, res) => {
   });
 };
 
-const signup = async (req, res) => {
+// TODO: beautiffully written but unecessary
+const _signup = async (req, res) => {
   const { username, email, password, productKey, roleName, roleId, forceRole } =
     req.body;
   try {
@@ -104,9 +99,8 @@ const signup = async (req, res) => {
     // --- Check for the role and if it's okay add it to the new user
     const {
       isRoleFound,
-      id: userRoleId,
-      name: userRoleName,
-      error: roleError,
+      role,
+      errorMsg: roleError,
     } = Role.checkRole({ id: roleId, name: roleName, forceRole });
 
     if (roleError) {
@@ -116,7 +110,7 @@ const signup = async (req, res) => {
     if (!isRoleFound) {
       return handleMessageForResponse("NO_ROLE_FOUND", res, 500);
     }
-    user.role = userRoleId;
+    user.role = role._id;
 
     // save the user to the database
     await user.save();
@@ -127,7 +121,47 @@ const signup = async (req, res) => {
 
     // send response
     res.status(200).send({
-      user: user.toResponseJson({ roleName: userRoleName }),
+      user: user.toResponseJson({ roleName: role.name }),
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    return handleMessageForResponse(error, res, 500);
+  }
+};
+
+/*
+  signup is a lightweighted version of _signup since
+  she is called after several middleware handling
+  necessary processes.
+*/
+const signup = async (req, res) => {
+  const { username, email, password } = req.body;
+  /*
+  registerUser.checkDuplicateUsernameOrEmail: check if the user is NOT already registered.
+  registerUser.checkDuplicateProductKey: check if the pk is stored -> req.checks.productKeyDoc
+  registerUser.checkRoleExisted: check if the role exists -> req.checks.roleDoc
+  */
+  const { productKeyDoc, roleDoc } = req.checks;
+  try {
+    const user = new User({
+      username,
+      email,
+      password: await User.hashPassword(password),
+      role: roleDoc._id,
+      productKey: productKeyDoc._id,
+    });
+
+    // save the user to the database
+    await user.save();
+
+    // retrieve token
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // send response
+    return res.status(200).send({
+      user: user.toResponseJson({ roleName: roleDoc.name }),
       accessToken,
       refreshToken,
     });
@@ -213,98 +247,6 @@ const signinWithProductKey = async (req, res) => {
 
     return res.status(200).send({
       user: linkedUser.toResponseJson({ roleName }),
-      accessToken,
-      refreshToken,
-    });
-  } catch (error) {
-    return handleMessageForResponse(error, res, 500);
-  }
-};
-/////////////////////////////////////////////////////
-/*
-  registerUser.checkDuplicateUsernameOrEmail,
-  registerUser.checkDuplicateProductKey,
-  registerUser.checkRoleExisted,
-*/
-const lightSignup = async (req, res) => {
-  const { username, email, password, productKey, roleName, roleId, forceRole } =
-    req.body;
-  try {
-    const user = new User({
-      username,
-      email,
-      password: await User.hashPassword(password),
-    });
-    // --- Check for the product key and if it's okay add it to the new user
-    const {
-      isKeyInvalid,
-      isStored,
-      storedProductKey,
-      isInUse,
-      isInUseMsg,
-      isLinkedToUser,
-      linkedUser,
-      error,
-    } = await checkProductKey(productKey);
-
-    if (isKeyInvalid) {
-      return handleMessageForResponse(
-        "INVALID_FORMAT_FOR_PRODUCT_KEY",
-        res,
-        500
-      );
-    }
-
-    if (error) {
-      return handleMessageForResponse(error, res, 500);
-    }
-
-    if (!isStored) {
-      return handleMessageForResponse("UNKNOWN_PRODUCT_KEY", res, 500);
-    }
-
-    if (!isInUse) {
-      return handleMessageForResponse(isInUseMsg, res, 500);
-    }
-
-    if (isLinkedToUser) {
-      return handleMessageForResponse(
-        "USED_PRODUCT_KEY",
-        res,
-        500,
-        `Product key already linked to user ${linkedUser._id}`
-      );
-    }
-
-    user.productKey = storedProductKey?._id;
-
-    // --- Check for the role and if it's okay add it to the new user
-    const {
-      isRoleFound,
-      id: userRoleId,
-      name: userRoleName,
-      error: roleError,
-    } = Role.checkRole({ id: roleId, name: roleName, forceRole });
-
-    if (roleError) {
-      return handleMessageForResponse(roleError, res, 500);
-    }
-
-    if (!isRoleFound) {
-      return handleMessageForResponse("NO_ROLE_FOUND", res, 500);
-    }
-    user.role = userRoleId;
-
-    // save the user to the database
-    await user.save();
-
-    // retrieve token
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // send response
-    res.status(200).send({
-      user: user.toResponseJson({ roleName: userRoleName }),
       accessToken,
       refreshToken,
     });

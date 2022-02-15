@@ -113,15 +113,18 @@ const startServer = async (port = process.env.PORT || 4000) => {
     app.db.addSuperAdminUser(adminOptions);
   }
 
+  if (process.env.NODE_ENV && process.env.NODE_ENV === "development") {
+    console.log("measures for development purpose");
+    // HELLO WORLD ROUTE
+    app.get("/hello-world", (req, res) => {
+      res.send({ express: "YOUR EXPRESS BACKEND IS ALIVE" });
+    });
+  }
+
   if (process.env.NODE_ENV && process.env.NODE_ENV !== "development") {
     // for development and avoid CORS stuff
     app.get("*", (req, res) => {
       res.sendFile("build/index.html", { root: __dirname });
-    });
-
-    // HELLO WORLD ROUTE
-    app.get("/hello-world", (req, res) => {
-      res.send({ express: "YOUR EXPRESS BACKEND IS ALIVE" });
     });
   }
 

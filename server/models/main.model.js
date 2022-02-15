@@ -123,7 +123,7 @@ const getDatabaseConnection = () => {
 
     for (let index = 0; index < data.length; index++) {
       //console.log("--------index", index);
-      const { productKey, role, ...rest } = data[index];
+      const { productKey, role, password, ...rest } = data[index];
 
       //console.log("productKey", productKey);
       //console.log("role", role);
@@ -157,6 +157,7 @@ const getDatabaseConnection = () => {
         formattedData.push({
           productKey: formattedProductKey,
           role: formattedRole,
+          password: await User.hashPassword(password),
           ...rest,
         });
       }

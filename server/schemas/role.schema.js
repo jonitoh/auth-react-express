@@ -138,9 +138,7 @@ class SchemaClass extends BaseSchemaClass {
   // `checkRole` becomes a static
   static async checkRole({ id, name, forceRole = true }) {
     // --- Check for the role and if it's okay add it to the new user
-    let roleId;
-    let roleName;
-    let error;
+    let errorMsg;
     let role;
 
     try {
@@ -161,17 +159,11 @@ class SchemaClass extends BaseSchemaClass {
         console.log("No given role. Set to default.");
         role = allRoles.find(({ name }) => name === this.defaultRole);
       }
-
-      // retrieve info from role
-      if (role) {
-        roleId = role._id;
-        roleName = role.name;
-      }
-    } catch (err) {
-      error = err.message;
+    } catch (error) {
+      errorMsg = error.message;
     }
 
-    return { isRoleFound: !!role, id: roleId, name: roleName, error };
+    return { isRoleFound: !!role, role, errorMsg };
   }
 
   // `higherThan` becomes a method

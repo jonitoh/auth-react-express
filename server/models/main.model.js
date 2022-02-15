@@ -45,6 +45,7 @@ const getDatabaseConnection = () => {
   // create helper function based on models
   const checkProductKey = async (productKey) => {
     // init variables
+    let isKeyInvalid = false;
     let isStored = false;
     let storedProductKey = null;
     let isInUse = true;
@@ -54,9 +55,10 @@ const getDatabaseConnection = () => {
     let error = new CustomError();
     try {
       // is productKey already stored
-      const ifStoredProductKey = ProductKey.checkIfStored(productKey);
+      const ifStoredProductKey = await ProductKey.checkIfStored(productKey);
       isStored = ifStoredProductKey.isStored;
       storedProductKey = ifStoredProductKey.storedProductKey;
+      isKeyInvalid = ifStoredProductKey.isKeyInvalid;
       error.add(ifStoredProductKey.errorMsg);
 
       if (isStored) {
@@ -64,12 +66,13 @@ const getDatabaseConnection = () => {
         [isInUse, isInUseMsg] = storedProductKey.isInUse();
 
         // check if the productKey is used by a user
-        linkedUser = await User.find({ key: duplicated._id });
+        linkedUser = await User.find({ productKey: storedProductKey._id });
       }
     } catch (err) {
       error.add(err);
     }
     return {
+      isKeyInvalid,
       isStored,
       storedProductKey,
       isInUse,
@@ -94,7 +97,7 @@ const getDatabaseConnection = () => {
     if (!!defaultRole) throw new Error("No default role found.");
 
     // set default role name
-    Role.defaultRole = defaultRole.name;
+    Role.defaultRoleName = defaultRole.name;
 
     return data.map(({ name, isDefault }) => ({
       name: name,
@@ -119,7 +122,7 @@ const getDatabaseConnection = () => {
     const formattedData = [];
 
     for (let index = 0; index < data.length; index++) {
-      console.log("--------index", index);
+      //console.log("--------index", index);
       const { productKey, role, ...rest } = data[index];
 
       //console.log("productKey", productKey);
@@ -180,7 +183,7 @@ const getDatabaseConnection = () => {
     }));
 
     // set default role name
-    Role.defaultRole = defaultRoleName;
+    Role.defaultRoleName = defaultRoleName;
 
     return data;
   };
@@ -298,28 +301,30 @@ const getDatabaseConnection = () => {
     try {
       console.log("initDatabase -- insertion ");
       if (method === "raw") {
-        Role.insertFromData(data.roles);
-        ProductKey.insertFromData(data.productKeys);
-        User.insertFromData(data.users);
+        const roles = await Role.insertFromData(data.roles);
+        await Role.updateDefaultValues();
+        const productKeys = await ProductKey.insertFromData(data.productKeys);
+        const users = await User.insertFromData(data.users);
+
+        const inventaire = {
+          roles: roles?.length ? roles.length : 0,
+          productKeys: productKeys?.length ? productKeys.length : 0,
+          users: users?.length ? users.length : 0,
+        };
+        console.log("number of inserted documents", inventaire);
       } else {
-        // TODO: bad idea how to have something not nested
-        Role.insertFromData(data.roles, (err, docs) => {
-          console.log("err role insert", err);
-          console.log("docs role insert", docs.length ? docs.length : 0);
+        const roles = await Role.insertFromData(data.roles);
+        await Role.updateDefaultValues();
+        const productKeys = await ProductKey.insertFromData(data.productKeys);
+        const userData = await formatUsersFromJson(data.users, coerceRole);
+        const users = await User.insertFromData(userData);
 
-          ProductKey.insertFromData(data.productKeys, async (err, docs) => {
-            console.log("err pk insert", err);
-            console.log("docs pk insert", docs.length ? docs.length : 0);
-
-            console.log("data.users[0]", data.users[0]);
-            const userData = await formatUsersFromJson(data.users, coerceRole);
-            console.log("userdata", userData);
-            User.insertFromData(userData, (err, docs) => {
-              console.log("err user insert", err);
-              console.log("docs user insert", docs.length ? docs.length : 0);
-            });
-          });
-        });
+        const inventaire = {
+          roles: roles?.length ? roles.length : 0,
+          productKeys: productKeys?.length ? productKeys.length : 0,
+          users: users?.length ? users.length : 0,
+        };
+        console.log("number of inserted documents", inventaire);
       }
     } catch (error) {
       throw new Error(`error during the ingestion phase:\n${error}`);
@@ -393,37 +398,38 @@ const getDatabaseConnection = () => {
     activated = true,
     validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
   }) => {
-    console.log("@@ start");
     try {
       let productKeyDoc;
       let roleDoc;
 
-      // retrieve productKeyDoc
-      if (!productKey) {
+      // -- retrieve productKeyDoc
+      const {
+        isKeyInvalid,
+        isStored,
+        storedProductKey,
+        isInUse,
+        isLinkedToUser,
+        linkedUser,
+        error,
+      } = await checkProductKey(productKey);
+
+      // we need a new key
+      if (isKeyInvalid || !productKey || !isStored) {
+        console.log("new pkey to add");
         // new key to add
         const newProductKey = new ProductKey({
-          key: productKey,
+          key: isKeyInvalid ? undefined : productKey,
           activationDate,
           activated,
           validityPeriod,
         });
-        productKeyDoc = await newProductKey.save().lean();
-      } else {
-        const {
-          isStored,
-          storedProductKey,
-          isInUse,
-          isLinkedToUser,
-          linkedUser,
-          error,
-        } = await checkProductKey(productKey);
-
+        productKeyDoc = await newProductKey.save();
+      }
+      // we have a key attached to no one
+      if (!isKeyInvalid) {
+        console.log("is the key attached to a user");
         if (error) {
           return handleErrorForLog(error);
-        }
-
-        if (!isStored) {
-          return handleErrorForLog("UNKNOWN_PRODUCT_KEY");
         }
 
         if (isLinkedToUser) {
@@ -444,10 +450,10 @@ const getDatabaseConnection = () => {
         }
         productKeyDoc = storedProductKey;
       }
-      console.log("@@ final pkdoc", productKeyDoc);
+      console.log("@@ final pkdoc", productKeyDoc._id);
 
-      // retrieve roleDoc
-      roleDoc = await Role.find(
+      // -- retrieve roleDoc
+      [roleDoc] = await Role.find(
         {},
         { _id: 1, name: 1 },
         { limit: 1, sort: { level: -1 } }
@@ -456,9 +462,9 @@ const getDatabaseConnection = () => {
       if (!roleDoc) {
         return handleErrorForLog("UNFOUND_HIGHEST_ROLE");
       }
-      console.log("@@ final roledoc", roleDoc);
+      console.log("@@ final roledoc", roleDoc._id);
 
-      // create user
+      // -- create user
       const user = new User({
         username,
         email,
@@ -467,12 +473,12 @@ const getDatabaseConnection = () => {
         role: roleDoc._id,
       });
 
-      const userDoc = user.save().lean();
+      const userDoc = await user.save();
 
       if (!userDoc) {
         return handleErrorForLog("NEW_USER_NOT_CREATED");
       }
-      console.log("@@ final userdoc", userDoc);
+      console.log("@@ final userdoc", userDoc._id);
       return;
     } catch (error) {
       return handleErrorForLog(error);

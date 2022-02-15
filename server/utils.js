@@ -119,9 +119,9 @@ class BaseSchemaClass {
   // `insertFromData` becomes a static
   static async insertFromData(data) {
     try {
-      await this.insertMany(data);
+      return await this.insertMany(data);
     } catch (e) {
-      handleErrorForLog(e);
+      return handleErrorForLog(e);
     }
   }
 

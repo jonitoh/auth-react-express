@@ -66,6 +66,7 @@ const updateUser = async (req, res) => {
     // update product key
     if (productKey) {
       const {
+        isKeyInvalid,
         isStored,
         storedProductKey,
         isInUse,
@@ -75,6 +76,13 @@ const updateUser = async (req, res) => {
         error,
       } = await checkProductKey(productKey);
 
+      if (isKeyInvalid) {
+        return handleMessageForResponse(
+          "INVALID_FORMAT_FOR_PRODUCT_KEY",
+          res,
+          500
+        );
+      }
       // send potential errors
       if (error) {
         return handleMessageForResponse(error, res, 500);

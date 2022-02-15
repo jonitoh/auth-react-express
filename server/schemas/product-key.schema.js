@@ -41,6 +41,11 @@ class SchemaClass extends BaseSchemaClass {
     return randomProductKey();
   }
 
+  // `hasWrongFormat` becomes a static
+  static hasWrongFormat(key) {
+    return key === null || key === undefined;
+  }
+
   // `findByKey` becomes a static
   static async findByKey(key) {
     try {
@@ -84,7 +89,7 @@ class SchemaClass extends BaseSchemaClass {
   // `isValid` becomes a virtual
   get isValid() {
     return (
-      (Date.now().getTime() - this.activationDate.getTime()) / 1000 <
+      (new Date().getTime() - this.activationDate.getTime()) / 1000 <
       this.validityPeriod
     );
   }
@@ -94,13 +99,19 @@ class SchemaClass extends BaseSchemaClass {
     let errorMsg = null;
     let storedProductKey = null;
     let isStored = false;
+    const isKeyInvalid = this.hasWrongFormat(key);
+
+    if (isKeyInvalid) {
+      return { isKeyInvalid, isStored, storedProductKey, errorMsg };
+    }
+
     try {
       storedProductKey = await this.findOne({ key });
       isStored = !!storedProductKey;
     } catch (error) {
       errorMsg = error.message;
     }
-    return { isStored, storedProductKey, errorMsg };
+    return { isKeyInvalid, isStored, storedProductKey, errorMsg };
   }
 }
 

@@ -197,6 +197,8 @@ This project is released under the terms of the [MIT License](LICENSE).
 
 - [advice with that async ish in mongoose] (https://www.freecodecamp.org/news/mongodb-mongoose-node-tutorial/)
 
+- [potential workaound for async getter] (https://medium.com/trabe/async-getters-and-setters-is-it-possible-c18759b6f7e4)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

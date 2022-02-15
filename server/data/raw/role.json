@@ -1,1 +1,54 @@
-[{"_id":"6208ecb46f5fdc4f45f87514","name":"invited","isDefault":false,"readOwn":false,"readOther":false,"modifyOwn":false,"modifyOther":false,"deleteOwn":false,"deleteOther":false,"level":0,"__v":0},{"_id":"6208ecb46f5fdc4f45f87515","name":"basic","isDefault":true,"readOwn":false,"readOther":false,"modifyOwn":false,"modifyOther":false,"deleteOwn":false,"deleteOther":false,"level":1,"__v":0},{"_id":"6208ecb46f5fdc4f45f87516","name":"admin","isDefault":false,"readOwn":false,"readOther":false,"modifyOwn":false,"modifyOther":false,"deleteOwn":false,"deleteOther":false,"level":10,"__v":0},{"_id":"6208ecb46f5fdc4f45f87517","name":"moderator","isDefault":false,"readOwn":false,"readOther":false,"modifyOwn":false,"modifyOther":false,"deleteOwn":false,"deleteOther":false,"level":5,"__v":0}]
+[
+  {
+    "_id": "620b012fa13212044bb0df97",
+    "name": "invited",
+    "isDefault": false,
+    "readOwn": false,
+    "readOther": false,
+    "modifyOwn": false,
+    "modifyOther": false,
+    "deleteOwn": false,
+    "deleteOther": false,
+    "level": 0,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0df98",
+    "name": "basic",
+    "isDefault": true,
+    "readOwn": true,
+    "readOther": false,
+    "modifyOwn": false,
+    "modifyOther": false,
+    "deleteOwn": true,
+    "deleteOther": false,
+    "level": 1,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0df99",
+    "name": "admin",
+    "isDefault": false,
+    "readOwn": true,
+    "readOther": true,
+    "modifyOwn": true,
+    "modifyOther": true,
+    "deleteOwn": true,
+    "deleteOther": true,
+    "level": 10,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0df9a",
+    "name": "moderator",
+    "isDefault": false,
+    "readOwn": true,
+    "readOther": true,
+    "modifyOwn": true,
+    "modifyOther": false,
+    "deleteOwn": true,
+    "deleteOther": false,
+    "level": 5,
+    "__v": 0
+  }
+]

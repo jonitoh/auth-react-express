@@ -35,24 +35,13 @@ const userSchema = new Schema(
   { timestamps: true } // createdAt & updatedAt
 );
 
-class SchemaClass extends BaseSchemaClass {
-  // `salt` becomes a virtual
-  get salt() {
-    return (async function () {
-      if (!this._salt) {
-        try {
-          this._salt = await bcrypt.genSalt(process.env.SALT_ROUNDS || 10);
-        } catch (error) {
-          handleErrorForLog(
-            error,
-            "Error in setting salt paramater for password hashing process in User"
-          );
-        }
-      }
-      return this._salt;
-    })();
-  }
+/*
+const salt = bcrypt.genSaltSync(
+  parseFloat(process.env.SALT_ROUNDS.toNumber) || 10
+); // "$2b$10$zjTwStq0X8vcx1JXAHEUMe"
+*/
 
+class SchemaClass extends BaseSchemaClass {
   // `currentUsername`becomes a virtual
   get currentUsername() {
     return this.username || capitalize(this.email.split("@")[0]);
@@ -96,7 +85,10 @@ class SchemaClass extends BaseSchemaClass {
   // `hashPassword` becomes a static
   static async hashPassword(password) {
     try {
-      return await bcrypt.hash(password, this.salt);
+      return await bcrypt.hash(
+        password,
+        parseFloat(process.env.SALT_ROUNDS) || "$2b$10$zjTwStq0X8vcx1JXAHEUMe"
+      );
     } catch (error) {
       handleErrorForLog(error, "couldn't hash the password");
     }

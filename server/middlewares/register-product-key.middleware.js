@@ -3,9 +3,16 @@ const { handleMessageForResponse } = require("../utils");
 
 checkDuplicateProductKey = (req, res, next) => {
   try {
-    const { isStored, storedProductKey, errorMsg } = ProductKey.checkIfStored(
-      req.body.productKey
-    );
+    const { isKeyInvalid, isStored, storedProductKey, errorMsg } =
+      ProductKey.checkIfStored(req.body.productKey);
+
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     if (errorMsg) {
       return handleMessageForResponse(errorMsg, res, 500);

@@ -1,1 +1,90 @@
-[{"_id":"6208ecb46f5fdc4f45f8751b","key":"72b641c4-e520-4995-a2e5-bbfbda1bace0","activationDate":"2022-02-04T08:23:41.411Z","activated":false,"validityPeriod":2400,"__v":0,"createdAt":"2022-02-13T11:34:12.641Z","updatedAt":"2022-02-13T11:34:12.641Z"},{"_id":"6208ecb46f5fdc4f45f8751c","key":"43dc94d4-6023-4c00-b675-d23f431398cb","activationDate":"2022-02-12T21:19:20.592Z","activated":true,"validityPeriod":4680,"__v":0,"createdAt":"2022-02-13T11:34:12.641Z","updatedAt":"2022-02-13T11:34:12.641Z"},{"_id":"6208ecb46f5fdc4f45f8751d","key":"52b59574-90b8-463a-8fde-6177e83098fc","activationDate":"2022-02-01T14:26:26.798Z","activated":true,"validityPeriod":4860,"__v":0,"createdAt":"2022-02-13T11:34:12.641Z","updatedAt":"2022-02-13T11:34:12.641Z"},{"_id":"6208ecb46f5fdc4f45f8751e","key":"33ea00c2-f59b-445d-a51e-c13bba5510f4","activationDate":"2022-02-08T20:05:19.972Z","activated":true,"validityPeriod":720,"__v":0,"createdAt":"2022-02-13T11:34:12.641Z","updatedAt":"2022-02-13T11:34:12.641Z"},{"_id":"6208ecb46f5fdc4f45f8751f","key":"5b44fbb9-3349-47fa-bc31-8420be013933","activationDate":"2022-02-02T08:41:56.767Z","activated":false,"validityPeriod":4500,"__v":0,"createdAt":"2022-02-13T11:34:12.641Z","updatedAt":"2022-02-13T11:34:12.641Z"},{"_id":"6208ecb46f5fdc4f45f87520","key":"5a2dd20e-0f3c-410d-ace0-35719b387528","activationDate":"2022-02-10T05:23:43.138Z","activated":true,"validityPeriod":3480,"__v":0,"createdAt":"2022-02-13T11:34:12.641Z","updatedAt":"2022-02-13T11:34:12.641Z"},{"_id":"6208ecb46f5fdc4f45f87521","key":"a7660d29-16ed-4f73-825f-8c292d7e5913","activationDate":"2022-02-02T04:08:56.791Z","activated":false,"validityPeriod":5340,"__v":0,"createdAt":"2022-02-13T11:34:12.642Z","updatedAt":"2022-02-13T11:34:12.642Z"},{"_id":"6208ecb46f5fdc4f45f87522","key":"1400b283-d097-4939-a0fa-a5660daa3f9f","activationDate":"2022-02-09T03:04:39.975Z","activated":false,"validityPeriod":3660,"__v":0,"createdAt":"2022-02-13T11:34:12.642Z","updatedAt":"2022-02-13T11:34:12.642Z"},{"_id":"6208ecb46f5fdc4f45f87523","key":"d6fa85f6-d3f2-41a6-b90d-e30d54b09d09","activationDate":"2022-02-10T00:46:04.753Z","activated":true,"validityPeriod":4620,"__v":0,"createdAt":"2022-02-13T11:34:12.642Z","updatedAt":"2022-02-13T11:34:12.642Z"},{"_id":"6208ecb46f5fdc4f45f87524","key":"228c48dc-ca8c-473e-a8d8-a1a8f2039c54","activationDate":"2022-02-04T13:59:08.745Z","activated":false,"validityPeriod":5100,"__v":0,"createdAt":"2022-02-13T11:34:12.642Z","updatedAt":"2022-02-13T11:34:12.642Z"}]
+[
+  {
+    "_id": "620b012fa13212044bb0df9f",
+    "key": "378ab534-4c13-4764-8298-59d46ec531e5",
+    "activationDate": "2022-02-13T13:34:21.538Z",
+    "activated": true,
+    "validityPeriod": 5580,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa0",
+    "key": "a20d64c5-5d22-4e59-962a-a74d34208ee1",
+    "activationDate": "2022-02-10T05:57:04.271Z",
+    "activated": true,
+    "validityPeriod": 5040,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa1",
+    "key": "3cc0af19-2438-4f04-a014-b772e3861ebc",
+    "activationDate": "2022-02-04T00:22:08.376Z",
+    "activated": false,
+    "validityPeriod": 1320,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa2",
+    "key": "0df6cdb1-2ad7-4438-9e60-cdb8ac7da8b1",
+    "activationDate": "2022-02-11T06:10:02.874Z",
+    "activated": false,
+    "validityPeriod": 5640,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa3",
+    "key": "cc482424-c55a-489b-946d-c6fc0218efbe",
+    "activationDate": "2022-02-03T06:28:54.895Z",
+    "activated": false,
+    "validityPeriod": 360,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa4",
+    "key": "ed185df6-e6b2-4489-b6de-adeb0cb85a6f",
+    "activationDate": "2022-02-07T23:25:06.189Z",
+    "activated": false,
+    "validityPeriod": 5220,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa5",
+    "key": "5eb35f6c-1eb4-4a20-9ea0-03fa9528fe68",
+    "activationDate": "2022-02-04T19:37:12.663Z",
+    "activated": true,
+    "validityPeriod": 1020,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa6",
+    "key": "89db9821-e24f-47ba-a16e-1015ecc82d83",
+    "activationDate": "2022-02-12T14:31:54.544Z",
+    "activated": false,
+    "validityPeriod": 4380,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa7",
+    "key": "0799350b-14b3-47c3-b8a2-981a908737a3",
+    "activationDate": "2022-02-02T14:36:13.516Z",
+    "activated": true,
+    "validityPeriod": 3420,
+    "__v": 0
+  },
+  {
+    "_id": "620b012fa13212044bb0dfa8",
+    "key": "be4fd4f5-869e-4f3a-8be2-8d5b13285976",
+    "activationDate": "2022-02-06T08:09:23.682Z",
+    "activated": false,
+    "validityPeriod": 1140,
+    "__v": 0
+  },
+  {
+    "_id": "620b0130a13212044bb0dfc6",
+    "key": "powerful-productKey",
+    "activationDate": "2022-02-15T01:26:08.493Z",
+    "activated": true,
+    "validityPeriod": 62208000,
+    "__v": 0
+  }
+]

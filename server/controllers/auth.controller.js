@@ -59,12 +59,8 @@ const signup = async (req, res) => {
       password: await User.hashPassword(password),
     });
     // --- Check for the product key and if it's okay add it to the new user
-    /*
-    if (!productKey) {
-      return handleMessageForResponse("MISSING_PRODUCT_KEY", res, 500);
-    }
-    */
     const {
+      isKeyInvalid,
       isStored,
       storedProductKey,
       isInUse,
@@ -73,6 +69,14 @@ const signup = async (req, res) => {
       linkedUser,
       error,
     } = await checkProductKey(productKey);
+
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     if (error) {
       return handleMessageForResponse(error, res, 500);
@@ -167,15 +171,23 @@ const signinWithEmail = async (req, res) => {
 const signinWithProductKey = async (req, res) => {
   const { productKey } = req.body;
   try {
-    // --- Check for the product key
-    /*
-    if (!productKey) {
-      return handleMessageForResponse("MISSING_PRODUCT_KEY", res, 500);
-    }
-    */
+    const {
+      isKeyInvalid,
+      isStored,
+      isInUse,
+      isInUseMsg,
+      isLinkedToUser,
+      linkedUser,
+      error,
+    } = await checkProductKey(productKey);
 
-    const { isStored, isInUse, isInUseMsg, isLinkedToUser, linkedUser, error } =
-      await checkProductKey(productKey);
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     if (error) {
       return handleMessageForResponse(error, res, 500);
@@ -224,12 +236,8 @@ const lightSignup = async (req, res) => {
       password: await User.hashPassword(password),
     });
     // --- Check for the product key and if it's okay add it to the new user
-    /*
-    if (!productKey) {
-      return handleMessageForResponse("MISSING_PRODUCT_KEY", res, 500);
-    }
-    */
     const {
+      isKeyInvalid,
       isStored,
       storedProductKey,
       isInUse,
@@ -238,6 +246,14 @@ const lightSignup = async (req, res) => {
       linkedUser,
       error,
     } = await checkProductKey(productKey);
+
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     if (error) {
       return handleMessageForResponse(error, res, 500);

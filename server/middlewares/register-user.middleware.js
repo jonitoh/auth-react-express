@@ -28,8 +28,16 @@ checkDuplicateUsernameOrEmail = async (req, res, next) => {
 checkProductKeyStored = async (req, res, next) => {
   const { productKey } = req.body;
   try {
-    const { isStored, storedProductKey, errorMsg } =
+    const { isKeyInvalid, isStored, storedProductKey, errorMsg } =
       ProductKey.checkIfStored(productKey);
+
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     if (errorMsg) {
       return handleMessageForResponse(errorMsg, res, 500);

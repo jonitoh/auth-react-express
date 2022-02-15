@@ -9,14 +9,22 @@ const deleteProductKey = async (req, res) => {
   const { productKey } = req.body;
   try {
     // --- Check for the product key
-    /*
-    if (!productKey) {
-      return handleMessageForResponse("MISSING_PRODUCT_KEY", res, 500);
-    }
-    */
+    const {
+      isKeyInvalid,
+      isStored,
+      storedProductKey,
+      isLinkedToUser,
+      linkedUser,
+      error,
+    } = await checkProductKey(productKey);
 
-    const { isStored, storedProductKey, isLinkedToUser, linkedUser, error } =
-      await checkProductKey(productKey);
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     // send potential errors
     if (error) {
@@ -53,14 +61,8 @@ const addProductKeyToUser = async (res, req) => {
   const { userId, productKey } = req.body;
 
   try {
-    // --- Check for the product key
-    /*
-    if (!productKey) {
-      return handleMessageForResponse("MISSING_PRODUCT_KEY", res, 500);
-    }
-    */
-
     const {
+      isKeyInvalid,
       isStored,
       storedProductKey,
       isInUse,
@@ -69,6 +71,14 @@ const addProductKeyToUser = async (res, req) => {
       linkedUser,
       error,
     } = await checkProductKey(productKey);
+
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     // send potential errors
     if (error) {
@@ -137,15 +147,16 @@ const addProductKeyToUser = async (res, req) => {
 const updateProductKey = async (req, res) => {
   const { productKey, validityPeriod, activated, activationDate } = req.body;
   try {
-    // --- Check for the product key
-    /*
-    if (!productKey) {
-      return handleMessageForResponse("MISSING_PRODUCT_KEY", res, 500);
-    }
-    */
-
-    const { isStored, storedProductKey, errorMsg } =
+    const { isKeyInvalid, isStored, storedProductKey, errorMsg } =
       ProductKey.checkIfStored(productKey);
+
+    if (isKeyInvalid) {
+      return handleMessageForResponse(
+        "INVALID_FORMAT_FOR_PRODUCT_KEY",
+        res,
+        500
+      );
+    }
 
     if (errorMsg) {
       return handleMessageForResponse(errorMsg, res, 500);

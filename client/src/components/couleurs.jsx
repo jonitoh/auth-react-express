@@ -14,7 +14,6 @@ import {
   Spacer,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
-import TestLayout from "../components/test-layout";
 import { useStore } from "store";
 
 const Tag = ({ text, mainColor, ...props }) => {

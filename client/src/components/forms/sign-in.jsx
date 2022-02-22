@@ -20,10 +20,10 @@ import {
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import FormMessage from "./form-message";
+import FormMessage from "./message";
 //import { AuthService } from "../services/api";
 
-const LogInForm = () => {
+export default function SignInForm() {
   // login with credentials
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -177,6 +177,4 @@ const LogInForm = () => {
       </Box>
     </Flex>
   );
-};
-
-export default LogInForm;
+}

@@ -17,10 +17,10 @@ import {
   //BeatLoader,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import FormMessage from "./form-message";
+import FormMessage from "./message";
 //import { AuthService } from "../services/api";
 
-const SignUpForm = () => {
+export default function RegisterByAdminForm() {
   // info for signing up
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -162,6 +162,4 @@ const SignUpForm = () => {
       </Box>
     </Flex>
   );
-};
-
-export default SignUpForm;
+}

@@ -8,10 +8,12 @@ const getRouter = () => {
 
   // adapt header
   router.use((req, res, next) => {
+    res.header("Content-Type", "application/json;charset=UTF-8");
+    res.header("Access-Control-Allow-Credentials", true);
     res.header(
       "Access-Control-Allow-Headers",
       "authorization, Origin, Content-Type, Accept"
-    );
+    ); // TODO: still necessary ?
     next();
   });
 
@@ -27,22 +29,22 @@ const getRouter = () => {
     controller.getAllInfo
   );
 
-  router.get("/", controller.getAllAccess);
+  router.get("/access", controller.getAllAccess);
 
   router.get(
-    "/user",
+    "/",
     [authJwt.authentificateToken, authJwt.hasAtLeastLevel(1)],
     controller.getUserStats
   );
 
   router.delete(
-    "/user",
+    "/",
     [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.deleteUser
   );
 
   router.post(
-    "/user",
+    "/",
     [authJwt.authentificateToken, authJwt.hasRole("moderator")],
     controller.updateUser
   );

@@ -55,17 +55,21 @@ const handleErrorForLog = (error, priorMessage = "", strictMode = false) => {
 };
 
 const handleMessageForResponse = (obj, res, code = 500, priorMessage = "") => {
+  let name = "Error";
+  let stack = undefined;
   if (priorMessage) {
     console.log(priorMessage);
   }
   let message;
   if (obj instanceof Error) {
     message = obj.message;
+    name = obj.name;
+    stack = obj.stack;
   }
   if (typeof obj === "string") {
     message = obj;
   }
-  res.status(code).send({ message });
+  res.status(code).send({ name, message, stack });
   return;
 };
 

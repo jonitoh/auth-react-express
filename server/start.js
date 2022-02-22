@@ -1,4 +1,5 @@
 const express = require("express"); // Import express framework
+const cookieParser = require("cookie-parser");
 const { getRoutes } = require("./routes");
 const { resolveInput } = require("./utils");
 
@@ -38,8 +39,13 @@ const startServer = async (port = process.env.PORT || 4000) => {
   const app = express();
 
   // Implement middleware;
+  // parse requests of content-type - application/json
   app.use(express.json());
+  // parse requests of content-type - application/x-www-form-urlencoded
   app.use(express.urlencoded({ extended: true }));
+
+  // parse cookies from request
+  app.use(cookieParser(process.env.COOKIE_SECRET));
 
   // being able to serve static files
   app.use("/public", express.static("public"));
@@ -92,6 +98,13 @@ const startServer = async (port = process.env.PORT || 4000) => {
     await app.db.initDatabase(method, populateDbOptions);
   }
 
+  // Add super admin product key
+  if (process.env.SUPER_ADMIN_INFO) {
+    const adminOptions = resolveInput(process.env.SUPER_ADMIN_INFO);
+    console.log(adminOptions);
+    app.db.addSuperAdminUser(adminOptions);
+  }
+
   // Make a dump of the database at the start of the app if necessary
   const dumpDatabaseAtOpen =
     process.env.DB_DUMP_AT_OPEN && process.env.DB_DUMP_AT_OPEN === "true";
@@ -106,13 +119,6 @@ const startServer = async (port = process.env.PORT || 4000) => {
     console.log("populate database -- end");
   }
 
-  // Add super admin product key
-  if (process.env.SUPER_ADMIN_INFO) {
-    const adminOptions = resolveInput(process.env.SUPER_ADMIN_INFO);
-    console.log(adminOptions);
-    app.db.addSuperAdminUser(adminOptions);
-  }
-
   if (process.env.NODE_ENV && process.env.NODE_ENV === "development") {
     console.log("measures for development purpose");
     // HELLO WORLD ROUTE
@@ -123,8 +129,9 @@ const startServer = async (port = process.env.PORT || 4000) => {
 
   if (process.env.NODE_ENV && process.env.NODE_ENV !== "development") {
     // for development and avoid CORS stuff
+    app.use(express.static(path.join(__dirname, "/client/build")));
     app.get("*", (req, res) => {
-      res.sendFile("build/index.html", { root: __dirname });
+      res.sendFile("client/build/index.html", { root: __dirname });
     });
   }
 

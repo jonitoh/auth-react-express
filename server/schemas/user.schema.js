@@ -50,11 +50,11 @@ class SchemaClass extends BaseSchemaClass {
   // `toResponseJson` becomes a document method
   toResponseJson(
     properties,
-    keepPassword = false,
+    removeSensitiveData = false,
     objectOptions = { versionKey: false }
   ) {
     const user = { ...this.toObject(objectOptions), ...properties };
-    if (keepPassword) {
+    if (removeSensitiveData) {
       delete user.password;
     }
     // add other properties
@@ -63,6 +63,8 @@ class SchemaClass extends BaseSchemaClass {
 
     return user;
   }
+
+  // TODO `decodePassword` becomes a document method
 
   // `checkPassword` becomes a document method
   async checkPassword(password) {

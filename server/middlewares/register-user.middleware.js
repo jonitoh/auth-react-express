@@ -2,17 +2,18 @@ const { Role, User, ProductKey } = require("../models");
 const { handleMessageForResponse } = require("../utils");
 
 checkDuplicateWithUsernameOrEmail = async (req, res, next) => {
+  const { email, username } = req.body;
   try {
     let isUserExists = false;
 
     // check email
-    if (req.body.email) {
-      isUserExists = await User.exists({ email: req.body.email });
+    if (email) {
+      isUserExists = await User.exists({ email });
     }
 
     // check username
-    if (!isUserExists && req.body.username) {
-      isUserExists = await User.exists({ username: req.body.username });
+    if (!isUserExists && username) {
+      isUserExists = await User.exists({ username });
     }
 
     if (isUserExists) {
@@ -55,7 +56,7 @@ checkProductKeyStored = async (req, res, next) => {
 };
 
 checkRoleExists = async (req, res, next) => {
-  const { role: roleName, roleId, forceRole } = req.body;
+  const { roleName, roleId, forceRole } = req.body;
   try {
     // --- Check for the role and if it's okay add it to the new user
     const { isRoleFound, role, error } = await Role.checkRole({

@@ -413,6 +413,15 @@ const getDatabaseConnection = () => {
         linkedUser,
         error,
       } = await checkProductKey(productKey);
+      console.log("checkpk", {
+        isKeyInvalid,
+        isStored,
+        storedProductKey,
+        isInUse,
+        isLinkedToUser,
+        linkedUser,
+        error,
+      });
 
       // we need a new key
       if (isKeyInvalid || !productKey || !isStored) {
@@ -427,7 +436,7 @@ const getDatabaseConnection = () => {
         productKeyDoc = await newProductKey.save();
       }
       // we have a key attached to no one
-      if (!isKeyInvalid) {
+      if (isStored) {
         console.log("is the key attached to a user");
         if (error) {
           return handleErrorForLog(error);
@@ -451,7 +460,7 @@ const getDatabaseConnection = () => {
         }
         productKeyDoc = storedProductKey;
       }
-      console.log("@@ final pkdoc", productKeyDoc._id);
+      console.log("@@ final pkdoc", productKeyDoc?._id);
 
       // -- retrieve roleDoc
       [roleDoc] = await Role.find(

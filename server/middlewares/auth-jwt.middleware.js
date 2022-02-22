@@ -1,17 +1,25 @@
 const jwt = require("jsonwebtoken");
 const authConfig = require("../config/auth.config.js");
-const { User, Role } = require("../models");
+const { Role } = require("../models");
 const { handleMessageForResponse } = require("../utils.js");
 
+const { TokenExpiredError } = jwt;
+const handleTokenErrorForResponse = (err, res) => {
+  if (err instanceof TokenExpiredError) {
+    return handleMessageForResponse("EXPIRED_ACCESS_TOKEN", res, 401);
+  }
+  return handleMessageForResponse("UNAUTHORIZED", res, 401);
+};
+
 const authentificateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const accessCookie = req.cookies?.accessToken;
+  const token = accessCookie?.split(" ")[1];
   if (!token) {
-    return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 403);
+    return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }
   jwt.verify(token, authConfig.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      return handleMessageForResponse("UNAUTHORIZED", res, 401);
+      return handleTokenErrorForResponse(err, res);
     }
     req.checks = {
       ...req.checks,

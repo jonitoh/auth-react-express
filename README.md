@@ -209,6 +209,12 @@ back end
 
 - [astuce mongoose] (https://simplernerd.com/mongoose-id-exists/)
 
+- [parsing request and express] (https://codewithhugo.com/parse-express-json-form-body/)
+
+- [http only cookie] (https://www.youtube.com/watch?v=894seNhONF8&list=WL&index=11)
+
+- [REACT HTTP COOKIE] (https://blog.logrocket.com/how-to-secure-react-app-login-authentication/)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

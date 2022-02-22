@@ -5,7 +5,7 @@ const getRoutes = () => {
   const router = express.Router();
 
   // Implement routes
-  // --> routes for authorisation
+  // --> routes for authorization
   const { getRouter: getAuthRouter } = require("./auth.route");
   router.use("/auth", getAuthRouter());
   // --> routes for product Key management

@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 const { handleMessageForResponse } = require("../utils");
 
 const generateAccessToken = (user) => {
-  const { id: _id, role } = user; // role here is an ID
+  const { _id: id, role } = user; // role here is an ID
   const token = jwt.sign({ id, role }, authConfig.ACCESS_TOKEN_SECRET, {
     expiresIn: authConfig.ACCESS_TOKEN_EXPIRATION,
   });
@@ -16,126 +16,49 @@ const generateAccessToken = (user) => {
 };
 
 const generateRefreshToken = (user) => {
-  const { id: _id, role } = user; // role here is an ID
+  const { _id: id, role } = user; // role here is an ID
   const token = jwt.sign({ id, role }, authConfig.REFRESH_TOKEN_SECRET, {
     expiresIn: authConfig.REFRESH_TOKEN_EXPIRATION,
   });
   return token;
 };
 
+const calculateCookieExpiration = (value) =>
+  !value || value == 0 ? 0 : new Date(Date.now() + value);
+
+const generateCookieValue = (token) => `Bearer ${token}`;
+
 const refreshToken = (req, res) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const refreshCookie = req.cookies?.refreshToken;
+  const token = refreshCookie?.split(" ")[1];
   if (!token) {
-    return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 403);
+    return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }
-  jwt.verify(token, authConfig.ACCESS_TOKEN_SECRET, (err, decoded) => {
+  jwt.verify(token, authConfig.REFRESH_TOKEN_SECRET, (err, decoded) => {
     if (err) {
       return handleMessageForResponse("UNAUTHORIZED", res, 401);
     }
     // check user exists and his rights
     delete decoded.iat;
     delete decoded.exp;
-    const refreshedToken = generateRefreshToken(decoded);
-    res.send({
-      accessToken: refreshedToken,
-    });
+    const refreshedToken = generateAccessToken(decoded);
+
+    res
+      .cookie("accessToken", generateCookieValue(refreshedToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .send({ isTokenResfreshed: true });
   });
 };
 
-// TODO: beautiffully written but unecessary
-const _signup = async (req, res) => {
-  const { username, email, password, productKey, roleName, roleId, forceRole } =
-    req.body;
-  try {
-    const user = new User({
-      username,
-      email,
-      password: await User.hashPassword(password),
-    });
-    // --- Check for the product key and if it's okay add it to the new user
-    const {
-      isKeyInvalid,
-      isStored,
-      storedProductKey,
-      isInUse,
-      isInUseMsg,
-      isLinkedToUser,
-      linkedUser,
-      error,
-    } = await checkProductKey(productKey);
-
-    if (isKeyInvalid) {
-      return handleMessageForResponse(
-        "INVALID_FORMAT_FOR_PRODUCT_KEY",
-        res,
-        500
-      );
-    }
-
-    if (error) {
-      return handleMessageForResponse(error, res, 500);
-    }
-
-    if (!isStored) {
-      return handleMessageForResponse("UNKNOWN_PRODUCT_KEY", res, 500);
-    }
-
-    if (!isInUse) {
-      return handleMessageForResponse(isInUseMsg, res, 500);
-    }
-
-    if (isLinkedToUser) {
-      return handleMessageForResponse(
-        "USED_PRODUCT_KEY",
-        res,
-        500,
-        `Product key already linked to user ${linkedUser._id}`
-      );
-    }
-
-    user.productKey = storedProductKey?._id;
-
-    // --- Check for the role and if it's okay add it to the new user
-    const {
-      isRoleFound,
-      role,
-      errorMsg: roleError,
-    } = Role.checkRole({ id: roleId, name: roleName, forceRole });
-
-    if (roleError) {
-      return handleMessageForResponse(roleError, res, 500);
-    }
-
-    if (!isRoleFound) {
-      return handleMessageForResponse("NO_ROLE_FOUND", res, 500);
-    }
-    user.role = role._id;
-
-    // save the user to the database
-    await user.save();
-
-    // retrieve token
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // send response
-    res.status(200).send({
-      user: user.toResponseJson({ roleName: role.name }),
-      accessToken,
-      refreshToken,
-    });
-  } catch (error) {
-    return handleMessageForResponse(error, res, 500);
-  }
-};
-
 /*
-  signup is a lightweighted version of _signup since
-  she is called after several middleware handling
-  necessary processes.
+  this signup controller is quite short since
+  important verifications are made in
+  previous called middlewares.
 */
-const signup = async (req, res) => {
+const register = async (req, res) => {
   const { username, email, password } = req.body;
   /*
   registerUser.checkDuplicateUsernameOrEmail: check if the user is NOT already registered.
@@ -160,17 +83,28 @@ const signup = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     // send response
-    return res.status(200).send({
-      user: user.toResponseJson({ roleName: roleDoc.name }),
-      accessToken,
-      refreshToken,
-    });
+    return res
+      .status(200)
+      .cookie("accessToken", generateCookieValue(accessToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .cookie("refreshToken", generateCookieValue(refreshToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .send({
+        isSignedIn: true,
+        user: user.toResponseJson({ roleName: roleDoc.name }, true),
+      });
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
   }
 };
 
-const signinWithEmail = async (req, res) => {
+const signInWithEmail = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findByEmail(email);
@@ -182,27 +116,36 @@ const signinWithEmail = async (req, res) => {
     const isValidPassword = await user.checkPassword(password);
     if (!isValidPassword) {
       return res.status(401).send({
-        accessToken: null,
         message: "INVALID_PASSWORD",
       });
     }
     // retrieve token
     const accessToken = generateAccessToken(user);
-    const refreshedToken = generateRefreshToken(user);
+    const refreshToken = generateRefreshToken(user);
 
     const roleDoc = await Role.findById(user.role);
-
-    return res.status(200).send({
-      user: user.toResponseJson({ roleName: roleDoc.name }),
-      accessToken,
-      refreshToken: refreshedToken,
-    });
+    return res
+      .status(200)
+      .cookie("accessToken", generateCookieValue(accessToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .cookie("refreshToken", generateCookieValue(refreshToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .send({
+        isSignedIn: true,
+        user: user.toResponseJson({ roleName: roleDoc.name }, true),
+      });
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
   }
 };
 
-const signinWithProductKey = async (req, res) => {
+const signInWithProductKey = async (req, res) => {
   const { productKey } = req.body;
   try {
     const {
@@ -245,19 +188,49 @@ const signinWithProductKey = async (req, res) => {
 
     const { role: roleName } = await Role.findById(linkedUser.role).lean();
 
-    return res.status(200).send({
-      user: linkedUser.toResponseJson({ roleName }),
-      accessToken,
-      refreshToken,
-    });
+    return res
+      .status(200)
+      .cookie("accessToken", generateCookieValue(accessToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .cookie("refreshToken", generateCookieValue(refreshToken), {
+        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+        httpOnly: true,
+        signed: true,
+      })
+      .send({
+        isSignedIn: true,
+        user: linkedUser.toResponseJson({ roleName }, true),
+      });
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
   }
 };
 
+const signOut = async (req, res) => {
+  // send response
+  return res
+    .status(200)
+    .clearCookie("accessToken", {
+      httpOnly: true,
+      signed: true,
+    })
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      signed: true,
+    })
+    .send({
+      isSignedOut: true,
+      message: "SIGNOUT",
+    });
+};
+
 module.exports = {
-  signup,
-  signinWithEmail,
-  signinWithProductKey,
   refreshToken,
+  register,
+  signInWithEmail,
+  signInWithProductKey,
+  signOut,
 };

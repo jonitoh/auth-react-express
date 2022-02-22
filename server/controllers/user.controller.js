@@ -2,9 +2,9 @@ const { User } = require("../models");
 const { handleMessageForResponse } = require("../utils");
 
 const deleteUser = async (req, res) => {
-  const { id: userId } = req.params;
+  const { _id } = req.params;
   try {
-    const deleted = await User.deleteOne({ _id: userId });
+    const deleted = await User.deleteOne({ _id });
     if (!deleted) {
       return handleMessageForResponse("ERROR_WHEN_DELETING_USER", res, 500);
     }

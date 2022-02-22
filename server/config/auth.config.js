@@ -6,4 +6,5 @@ module.exports = {
   /* for test */
   // ACCESS_TOKEN_EXPIRATION: 60,          // 1 minute
   // REFRESH_TOKEN_EXPIRATION: 120,  // 2 minutes
+  COOKIE_EXPIRATION: process.env.COOKIE_EXPIRATION || 0, // en milliseconds //  8 * 3600000: cookie will be removed after 8 hours
 };

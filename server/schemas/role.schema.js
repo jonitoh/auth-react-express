@@ -146,7 +146,7 @@ class SchemaClass extends BaseSchemaClass {
 
       // retrieve role doc from given id
       if (id) {
-        role = allRoles.find(({ _id }) => _id === id);
+        role = allRoles.find(({ _id }) => _id.toString() === id.toString());
       }
 
       // retrieve role doc from given role name

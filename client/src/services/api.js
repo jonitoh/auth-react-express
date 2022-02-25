@@ -1,15 +1,18 @@
 import axios from "axios";
+import { useStore } from "store";
 
 class BaseApi {
-  constructor() {
-    this.instance = this.initiateInstance();
+  constructor(showLog = true) {
+    this.instance = this.initiateInstance(showLog);
   }
 
-  initiateInstance = () => {
+  initiateInstance = (showLog) => {
+    // retrieve accessToken
+    const accessToken = useStore.getState().accessToken;
     // create an instance with axios
     const instance = axios.create({
       // `baseURL` will be prepended to `url` unless `url` is absolute.
-      baseURL: process.env.API_URL || "http://localhost:3000/",
+      baseURL: process.env.API_URL || "http://localhost:3001/api",
 
       // `headers` are custom headers to be sent
       headers: {
@@ -30,6 +33,9 @@ class BaseApi {
       maxRedirects: 5,
     });
 
+    // set the authorization header
+    instance.defaults.headers.common["authorization"] = `Bearer ${accessToken}`;
+
     // take advantage of interceptors: methods which are triggered before the main method
     instance.interceptors.response.use(
       // Custom logger for summarize our successful response
@@ -38,8 +44,9 @@ class BaseApi {
           status,
           config: { method, url },
         } = response;
-
-        console.log(`METHOD=${method} SERVICEURL=${url} STATUS=${status}`);
+        if (showLog) {
+          console.log(`METHOD=${method} SERVICEURL=${url} STATUS=${status}`);
+        }
 
         return response;
       },
@@ -55,7 +62,15 @@ class BaseApi {
           originalRequest._retry = true;
           try {
             const response = await instance.get("/refresh-token");
-            console.log("is the token refreshed?", response.isTokenResfreshed);
+            console.log("is the token refreshed?", response?.isTokenResfreshed);
+            const newAccessToken = response?.accessToken;
+            useStore.setState({ accessToken: newAccessToken });
+            instance.defaults.headers.common[
+              "authorization"
+            ] = `Bearer ${newAccessToken}`;
+            originalRequest.headers[
+              "authorization"
+            ] = `Bearer ${newAccessToken}`;
           } catch (error) {
             console.log(
               `Error during the refreshing token process (status ${error.response.status}):\n${error.message}`
@@ -153,8 +168,8 @@ class UserApi extends BaseApi {
     return await this.instance.get("/user/info/" + userId);
   };
 
-  getAllInfo = async () => {
-    return await this.instance.get("/user/info/");
+  getAllInfo = async (options = {}) => {
+    return await this.instance.get("/user/info/", options);
   };
 
   getAllAccess = async () => {
@@ -202,11 +217,12 @@ export function handleResponse(response) {
 }
 */
 
-const api = {
-  authApi: new AuthApi(),
-  productKeyApi: new ProductKeyApi(),
-  userApi: new UserApi(),
-  fakeApi: new FakeApi(),
-};
-
-export default api;
+export default function instanciateApi(showLog = true) {
+  const api = {
+    authApi: new AuthApi(showLog),
+    productKeyApi: new ProductKeyApi(showLog),
+    userApi: new UserApi(showLog),
+    fakeApi: new FakeApi(showLog),
+  };
+  return api;
+}

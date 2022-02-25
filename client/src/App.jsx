@@ -3,16 +3,19 @@ import "./App.css";
 import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useStore } from "store";
+import RequireAuth from "components/require-auth";
 import SignIn from "pages/sign-in";
 import SignOut from "pages/sign-out";
 import Register from "pages/register";
 import RegisterByAdmin from "pages/register-by-admin";
+import Unauthorized from "pages/unauthorized";
 import Home from "pages/home";
 import StatsPage from "pages/stats";
 import Settings from "pages/settings";
-// below only for testing purpose
+import Missing from "pages/missing";
 import Couleur from "pages/couleurs";
 import Test from "pages/test";
+import ROLES from "utils/roles";
 
 export default function App() {
   const { initiateTheme, getChakraTheme } = useStore();
@@ -25,20 +28,37 @@ export default function App() {
     <ChakraProvider theme={theme} resetCSS={true}>
       <BrowserRouter>
         <Routes>
+          {/* public routes */}
           <Route exact path="/sign-in" element={<SignIn />} />
           <Route exact path="/sign-out" element={<SignOut />} />
           <Route exact path="/register" element={<Register />} />
+          <Route exact path="/unauthorized" element={<Unauthorized />} />
+
+          {/* protected routes */}
+          <Route element={<RequireAuth />}>
+            <Route exact path="/" element={<Home />} />
+            <Route exact path="/stats" element={<StatsPage />} />
+            <Route exact path="/settings" element={<Settings />} />
+          </Route>
+          <Route element={<RequireAuth allowedRoles={[ROLES.ADMIN]} />}>
+            <Route
+              exact
+              path="/register-by-admin"
+              element={<RegisterByAdmin />}
+            />
+          </Route>
+          {/* test-driven routes */}
           <Route
-            exact
-            path="/register-by-admin"
-            element={<RegisterByAdmin />}
-          />
-          <Route exact path="/" element={<Home />} />
-          <Route exact path="/stats" element={<StatsPage />} />
-          <Route exact path="/settings" element={<Settings />} />
-          {/* below only for testing purpose */}
-          <Route exact path="/couleur" element={<Couleur />} />
-          <Route exact path="/test" element={<Test />} />
+            element={
+              <RequireAuth allowedRoles={[ROLES.ADMIN, ROLES.MODERATOR]} />
+            }
+          >
+            <Route exact path="/couleur" element={<Couleur />} />
+            <Route exact path="/test" element={<Test />} />
+          </Route>
+
+          {/* catch all route */}
+          <Route path="*" element={<Missing />} />
         </Routes>
       </BrowserRouter>
     </ChakraProvider>

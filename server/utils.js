@@ -40,7 +40,7 @@ const formatDate = (date) =>
   pad(date.getUTCHours()) +
   "-" +
   pad(date.getUTCMinutes()) +
-  "" +
+  "-" +
   pad(date.getUTCSeconds());
 
 const handleErrorForLog = (error, priorMessage = "", strictMode = false) => {

@@ -20,6 +20,7 @@ export default function MainLayout({ children, showNotification = true }) {
   );
   // For sidebar functionality
   const { isOpen, onOpen, onClose } = useDisclosure();
+  console.log("user?", user);
   return (
     <Flex bg="palette.primary-4" flexDirection="row" h="100%" overflow="scroll">
       <ResponsiveSidebar

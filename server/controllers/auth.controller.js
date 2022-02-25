@@ -1,55 +1,41 @@
-const authConfig = require("../config/auth.config");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  calculateCookieExpiration,
+  verifyRefreshToken,
+} = require("../config/jwt.config");
 const {
   User,
   Role,
   helpers: { checkProductKey },
 } = require("../models");
-const jwt = require("jsonwebtoken");
 const { handleMessageForResponse } = require("../utils");
 
-const generateAccessToken = (user) => {
-  const { _id: id, role } = user; // role here is an ID
-  const token = jwt.sign({ id, role }, authConfig.ACCESS_TOKEN_SECRET, {
-    expiresIn: authConfig.ACCESS_TOKEN_EXPIRATION,
-  });
-  return token;
-};
-
-const generateRefreshToken = (user) => {
-  const { _id: id, role } = user; // role here is an ID
-  const token = jwt.sign({ id, role }, authConfig.REFRESH_TOKEN_SECRET, {
-    expiresIn: authConfig.REFRESH_TOKEN_EXPIRATION,
-  });
-  return token;
-};
-
-const calculateCookieExpiration = (value) =>
-  !value || value == 0 ? 0 : new Date(Date.now() + value);
-
-const generateCookieValue = (token) => `Bearer ${token}`;
-
-const refreshToken = (req, res) => {
-  const refreshCookie = req.cookies?.refreshToken;
-  const token = refreshCookie?.split(" ")[1];
-  if (!token) {
+const refreshToken = async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
     return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }
-  jwt.verify(token, authConfig.REFRESH_TOKEN_SECRET, (err, decoded) => {
-    if (err) {
+
+  const user = await User.findOne({ refreshToken });
+  if (!user) {
+    return handleMessageForResponse(
+      "NO_USER_LINKED_TO_TOKEN_PROVIDED",
+      res,
+      401
+    );
+  }
+
+  verifyRefreshToken(refreshToken, (err, decoded) => {
+    if (err || user._id !== decoded.id) {
       return handleMessageForResponse("UNAUTHORIZED", res, 401);
     }
     // check user exists and his rights
     delete decoded.iat;
     delete decoded.exp;
-    const refreshedToken = generateAccessToken(decoded);
+    const newAccessToken = generateAccessToken(decoded);
 
-    res
-      .cookie("accessToken", generateCookieValue(refreshedToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
-        httpOnly: true,
-        signed: true,
-      })
-      .send({ isTokenResfreshed: true });
+    res.send({ isTokenResfreshed: true, accessToken: newAccessToken });
   });
 };
 
@@ -75,29 +61,28 @@ const register = async (req, res) => {
       productKey: productKeyDoc._id,
     });
 
-    // save the user to the database
-    await user.save();
-
     // retrieve token
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    // save refreshToken with current user
+    user.refreshToken = refreshToken;
+
+    // save the user to the database
+    await user.save();
+
     // send response
     return res
       .status(200)
-      .cookie("accessToken", generateCookieValue(accessToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
-        httpOnly: true,
-        signed: true,
-      })
-      .cookie("refreshToken", generateCookieValue(refreshToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+      .cookie("refreshToken", refreshToken, {
+        expires: calculateCookieExpiration(),
         httpOnly: true,
         signed: true,
       })
       .send({
-        isSignedIn: true,
+        isRegistered: true,
         user: user.toResponseJson({ roleName: roleDoc.name }, true),
+        accessToken,
       });
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
@@ -123,22 +108,22 @@ const signInWithEmail = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    // save refreshToken into user
+    user.refreshToken = refreshToken;
+    await user.save();
+
     const roleDoc = await Role.findById(user.role);
     return res
       .status(200)
-      .cookie("accessToken", generateCookieValue(accessToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
-        httpOnly: true,
-        signed: true,
-      })
-      .cookie("refreshToken", generateCookieValue(refreshToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+      .cookie("refreshToken", refreshToken, {
+        expires: calculateCookieExpiration(),
         httpOnly: true,
         signed: true,
       })
       .send({
         isSignedIn: true,
         user: user.toResponseJson({ roleName: roleDoc.name }, true),
+        accessToken,
       });
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
@@ -186,37 +171,50 @@ const signInWithProductKey = async (req, res) => {
     const accessToken = generateAccessToken(linkedUser);
     const refreshToken = generateRefreshToken(linkedUser);
 
+    // save refreshToken into user
+    linkedUser.refreshToken = refreshToken;
+    await linkedUser.save();
+
     const { role: roleName } = await Role.findById(linkedUser.role).lean();
 
     return res
       .status(200)
-      .cookie("accessToken", generateCookieValue(accessToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
-        httpOnly: true,
-        signed: true,
-      })
-      .cookie("refreshToken", generateCookieValue(refreshToken), {
-        expires: calculateCookieExpiration(authConfig.COOKIE_EXPIRATION),
+      .cookie("refreshToken", refreshToken, {
+        expires: calculateCookieExpiration(),
         httpOnly: true,
         signed: true,
       })
       .send({
         isSignedIn: true,
         user: linkedUser.toResponseJson({ roleName }, true),
+        accessToken,
       });
   } catch (error) {
     return handleMessageForResponse(error, res, 500);
   }
 };
+/*
+signInWithExistingCookie: no useful since we have in middelware authentificateToken
+*/
 
 const signOut = async (req, res) => {
+  //
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    return handleMessageForResponse("NO_REFRESH_TOKEN", res, 204);
+  }
+
+  const user = await User.findOne({ refreshToken });
+  if (user) {
+    // delete refreshToken in database
+    user.refreshToken = "";
+    await user.save();
+  }
+
   // send response
   return res
-    .status(200)
-    .clearCookie("accessToken", {
-      httpOnly: true,
-      signed: true,
-    })
+    .status(204)
     .clearCookie("refreshToken", {
       httpOnly: true,
       signed: true,

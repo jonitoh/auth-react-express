@@ -6,17 +6,6 @@ const getRouter = () => {
   // Initiate express router
   const router = express.Router();
 
-  // adapt header
-  router.use((req, res, next) => {
-    res.header("Content-Type", "application/json;charset=UTF-8");
-    res.header("Access-Control-Allow-Credentials", true);
-    res.header(
-      "Access-Control-Allow-Headers",
-      "authorization, Origin, Content-Type, Accept"
-    ); // TODO: still necessary
-    next();
-  });
-
   // Sign Up
   router.post(
     "/register",

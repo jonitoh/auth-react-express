@@ -1,4 +1,5 @@
 const express = require("express");
+const middlewares = require("../middlewares");
 
 const getRoutes = () => {
   // Initiate express router
@@ -8,6 +9,9 @@ const getRoutes = () => {
   // --> routes for authorization
   const { getRouter: getAuthRouter } = require("./auth.route");
   router.use("/auth", getAuthRouter());
+
+  // add middleware to secure the following routes
+  router.use(middlewares.verifyJwt.authentificateAccessToken);
   // --> routes for product Key management
   const { getRouter: getProductKeyRouter } = require("./product-key.route");
   router.use("/product-key", getProductKeyRouter());

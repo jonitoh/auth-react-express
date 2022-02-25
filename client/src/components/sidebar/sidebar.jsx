@@ -205,7 +205,7 @@ export default function Sidebar({
           src={user.imgSrc}
           roleName={user.roleName}
           label={user.username}
-          link="/log-out"
+          link="/sign-out"
         />
       </InnerWrapper>
     </Flex>

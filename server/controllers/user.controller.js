@@ -2,9 +2,9 @@ const { User } = require("../models");
 const { handleMessageForResponse } = require("../utils");
 
 const deleteUser = async (req, res) => {
-  const { _id } = req.params;
+  const { userId } = req.params;
   try {
-    const deleted = await User.deleteOne({ _id });
+    const deleted = await User.deleteOne({ _id: userId });
     if (!deleted) {
       return handleMessageForResponse("ERROR_WHEN_DELETING_USER", res, 500);
     }
@@ -15,7 +15,7 @@ const deleteUser = async (req, res) => {
 };
 
 const getInfo = async (req, res) => {
-  const { id: userId } = req.params;
+  const { userId } = req.params;
   try {
     const user = await User.findById(userId).lean();
     if (!user) {
@@ -28,8 +28,11 @@ const getInfo = async (req, res) => {
 };
 
 const getAllInfo = async (req, res) => {
+  console.log("in all info");
   try {
+    console.log("in try");
     const users = await User.find({});
+    console.log("users?", users);
     if (!users) {
       return handleMessageForResponse("UNFOUND_USERS", res, 500);
     }

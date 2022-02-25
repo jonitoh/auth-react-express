@@ -30,6 +30,7 @@ const userSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Role",
     },
+    refreshToken: { type: String },
   },
   { collection: "user" },
   { timestamps: true } // createdAt & updatedAt
@@ -56,6 +57,8 @@ class SchemaClass extends BaseSchemaClass {
     const user = { ...this.toObject(objectOptions), ...properties };
     if (removeSensitiveData) {
       delete user.password;
+      delete user.productKey;
+      delete user.refreshToken;
     }
     // add other properties
     user.hasUsername = !!user.username;

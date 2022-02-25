@@ -2,6 +2,7 @@
 State management for user persistence regarding custom choices and authorization in the application.
 */
 import roles from "data/roles";
+import ROLES from "utils/roles";
 const getImgSrc = (src, roleName) => {
   if (src) {
     return src;
@@ -15,7 +16,7 @@ const getImgSrc = (src, roleName) => {
 
 const fakeUser = {
   username: "Fusername",
-  roleName: "moderator", //"admin",
+  roleName: ROLES.MODERATOR, //ROLES.ADMIN,
   hasUsername: false,
   email: "fake-user@test.fr",
   productKey: "id_of_fake-pk",
@@ -59,23 +60,29 @@ const fakeNotifications = [
 export default function userSlice(set, get) {
   return {
     //states
+    _user: null,
     user: {
       ...fakeUser,
       imgSrc: getImgSrc(fakeUser.imgSrc, fakeUser.roleName),
     }, //null,
     userTagName: "current-user",
     notifications: fakeNotifications, //[],
+    accessToken: "",
 
     //actions
-    updateUser: (user) => set({ user }),
-    setDocumentUser: () =>
-      document.documentElement.setAttribute(get().userTagName, get().user),
+    setAccessToken: (accessToken) => set({ accessToken }),
+    updateUser: (user) =>
+      set({ user: { ...user, imgSrc: getImgSrc(user.imgSrc, user.roleName) } }),
     setLocalStorageUser: () =>
       localStorage.setItem(get().userTagName, JSON.stringify(get().user)),
+    removeLocalStorageUser: () => localStorage.removeItem(get().userTagName),
     setUser: (user) => {
       get().updateUser(user);
-      get().setDocumentUser();
       get().setLocalStorageUser();
+    },
+    removeUser: () => {
+      get().updateUser(null);
+      get().removeLocalStorageUser();
     },
     initiateUser: () => {
       if (!localStorage.getItem(get().userTagName)) {
@@ -84,19 +91,25 @@ export default function userSlice(set, get) {
       } else {
         get().updateUser(JSON.parse(localStorage.getItem(get().userTagName)));
       }
-      get().setDocumentUser();
     },
-    hasRight: (roleName, authRoles) => {
-      if (!authRoles) {
-        return true;
+    hasRight: (roleName, authRoles, isStrict = true) => {
+      // if authRoles undefined or not an array, we put a default list
+      let myAllowedRoles = Object.values(ROLES);
+
+      if (authRoles instanceof Array && authRoles.length !== 0) {
+        myAllowedRoles = myAllowedRoles.filter((r) => authRoles.includes(r));
       }
-      if (authRoles instanceof Array) {
-        if (authRoles.length === 0) {
-          return true;
+      if (myAllowedRoles.length === 0) {
+        console.log(
+          "it seems like the roles you wanted are not known by the authentification system. "
+        );
+        if (isStrict) {
+          throw new Error("UNKNOWN_ROLES");
         }
-        return authRoles.includes(roleName);
+        //myAllowedRoles = Object.values(ROLES);
+        return false;
       }
-      return false;
+      return myAllowedRoles.includes(roleName);
     },
     addNotification: () => {},
     removeNotification: (id) => {

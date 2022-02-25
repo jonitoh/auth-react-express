@@ -1,24 +1,29 @@
 import React from "react";
-import { Route, Redirect } from "react-router-dom";
+import { Navigate, Route } from "react-router-dom";
+import { useStore } from "store";
 
-import { authenticationService } from "@/_services";
-
-export const PrivateRoute = ({ component: Component, ...rest }) => (
-  <Route
-    {...rest}
-    render={(props) => {
-      const currentUser = authenticationService.currentUserValue;
-      if (!currentUser) {
-        // not logged in so redirect to login page with the return url
-        return (
-          <Redirect
-            to={{ pathname: "/login", state: { from: props.location } }}
+export default function AuthRoute({
+  component: Component,
+  allowedRoles,
+  ...rest
+}) {
+  const { user, hasRight } = useStore();
+  return (
+    <Route
+      {...rest}
+      render={(props) =>
+        hasRight(user?.roleName, allowedRoles) ? (
+          <Component {...props} />
+        ) : user ? (
+          <Navigate
+            to="/unauthorized"
+            state={{ from: props.location }}
+            replace
           />
-        );
+        ) : (
+          <Navigate to="/sign-in" state={{ from: props.location }} replace />
+        )
       }
-
-      // authorised so return component
-      return <Component {...props} />;
-    }}
-  />
-);
+    />
+  );
+}

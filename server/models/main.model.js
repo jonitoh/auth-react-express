@@ -15,6 +15,9 @@ const getDatabaseConnection = () => {
   // import config
   const dbConfig = require("../config/db.config");
 
+  // global configuration
+  mongoose.ObjectId.get((v) => v.toString());
+
   // create connection
   const connection = mongoose.createConnection(dbConfig.URI, {
     useNewUrlParser: true, // use the newest url string parser

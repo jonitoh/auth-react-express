@@ -215,6 +215,8 @@ back end
 
 - [REACT HTTP COOKIE] (https://blog.logrocket.com/how-to-secure-react-app-login-authentication/)
 
+- [express http cookie] (https://medium.com/@zahedialfurquan20/using-cookies-to-store-jwt-for-authentication-and-authorization-in-a-mern-stack-app-a58d7a5d6b6e)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

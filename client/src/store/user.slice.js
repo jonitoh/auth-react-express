@@ -2,18 +2,11 @@
 State management for user persistence regarding custom choices and authorization in the application.
 */
 import roles from "data/roles";
-import ROLES from "utils/roles";
-const getImgSrc = (src, roleName) => {
-  if (src) {
-    return src;
-  }
-  const altImg = roles.find((r) => r.name === roleName);
-  if (altImg) {
-    return altImg.src;
-  }
-  return "";
-};
+import { useAdvancedLocalStorage } from "hooks/useLocalStorage";
+import { ROLES, getImgSrcFromRoles } from "utils/roles";
+import { isEmpty } from "utils/function";
 
+/*
 const fakeUser = {
   username: "Fusername",
   roleName: ROLES.MODERATOR, //ROLES.ADMIN,
@@ -21,9 +14,10 @@ const fakeUser = {
   email: "fake-user@test.fr",
   productKey: "id_of_fake-pk",
   roleId: "1",
-  //imgSrc: undefined,
+  imgSrc: undefined,
 };
-
+fakeUser.imgSrc = getImgSrcFromRoles(roles, fakeUser.imgSrc, fakeUser.roleName);
+*/
 const fakeNotifications = [
   {
     id: "1",
@@ -60,37 +54,33 @@ const fakeNotifications = [
 export default function userSlice(set, get) {
   return {
     //states
-    _user: null,
-    user: {
-      ...fakeUser,
-      imgSrc: getImgSrc(fakeUser.imgSrc, fakeUser.roleName),
-    }, //null,
+    user: null,
     userTagName: "current-user",
     notifications: fakeNotifications, //[],
     accessToken: "",
 
     //actions
     setAccessToken: (accessToken) => set({ accessToken }),
+    getUser: () => get().user,
+    isValidUser: (user) => !isEmpty(user),
     updateUser: (user) =>
-      set({ user: { ...user, imgSrc: getImgSrc(user.imgSrc, user.roleName) } }),
-    setLocalStorageUser: () =>
-      localStorage.setItem(get().userTagName, JSON.stringify(get().user)),
-    removeLocalStorageUser: () => localStorage.removeItem(get().userTagName),
-    setUser: (user) => {
-      get().updateUser(user);
-      get().setLocalStorageUser();
-    },
+      get().isValidUser(user) &&
+      set({
+        user: {
+          ...user,
+          imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
+        },
+      }),
+    useUser: () =>
+      useAdvancedLocalStorage(
+        get().userTagName,
+        get().user,
+        get().updateUser,
+        get().updateUser
+      ),
     removeUser: () => {
-      get().updateUser(null);
-      get().removeLocalStorageUser();
-    },
-    initiateUser: () => {
-      if (!localStorage.getItem(get().userTagName)) {
-        get().updateUser(get().user);
-        get().setLocalStorageUser();
-      } else {
-        get().updateUser(JSON.parse(localStorage.getItem(get().userTagName)));
-      }
+      window.localStorage.removeItem(get().userTagName);
+      return set({ user: null });
     },
     hasRight: (roleName, authRoles, isStrict = true) => {
       // if authRoles undefined or not an array, we put a default list

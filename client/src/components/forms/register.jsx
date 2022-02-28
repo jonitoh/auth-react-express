@@ -25,7 +25,7 @@ import {
   validateEmail,
   validateProductKey,
 } from "./elements";
-import api from "../../services/api";
+import instanciateApi from "../../services/api";
 import { useStore } from "store";
 
 export default function RegisterForm() {
@@ -33,6 +33,7 @@ export default function RegisterForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+  const api = instanciateApi();
 
   const { setUser } = useStore();
   // references for focus on user input and error
@@ -188,7 +189,7 @@ export default function RegisterForm() {
       <Box p={8} minW="400px" borderWidth={1} borderRadius={8} boxShadow="lg">
         <Box textAlign="center">
           {errorMsg && (
-            <Alert ref={errorRef} status="error" message={errorMsg} />
+            <Alert myRef={errorRef} status="error" message={errorMsg} />
           )}
           <Heading>Register</Heading>
         </Box>

@@ -213,16 +213,14 @@ const signOut = async (req, res) => {
   }
 
   // send response
-  return res
-    .status(204)
-    .clearCookie("refreshToken", {
-      httpOnly: true,
-      signed: true,
-    })
-    .send({
-      isSignedOut: true,
-      message: "SIGNOUT",
-    });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    signed: true,
+  });
+  return res.status(204).send({
+    isSignedOut: true,
+    message: "SIGNOUT",
+  });
 };
 
 module.exports = {

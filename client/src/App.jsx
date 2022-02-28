@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./App.css";
 import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -15,15 +15,15 @@ import Settings from "pages/settings";
 import Missing from "pages/missing";
 import Couleur from "pages/couleurs";
 import Test from "pages/test";
-import ROLES from "utils/roles";
+import { ROLES } from "utils/roles";
 
 export default function App() {
-  const { initiateTheme, getChakraTheme } = useStore();
-  // COLOR THEME -- Force an initial state based on the local storage value
-  useEffect(() => initiateTheme(), [initiateTheme]);
-  const theme = getChakraTheme();
-  // <Route exact path="/" element={<Home />} />
-  //<Layout>
+  const { useTheme, getChakraTheme, useUser } = useStore();
+
+  const [themeName] = useTheme();
+  const theme = getChakraTheme(themeName);
+
+  const [user] = useUser();
   return (
     <ChakraProvider theme={theme} resetCSS={true}>
       <BrowserRouter>
@@ -35,12 +35,14 @@ export default function App() {
           <Route exact path="/unauthorized" element={<Unauthorized />} />
 
           {/* protected routes */}
-          <Route element={<RequireAuth />}>
+          <Route element={<RequireAuth user={user} />}>
             <Route exact path="/" element={<Home />} />
             <Route exact path="/stats" element={<StatsPage />} />
             <Route exact path="/settings" element={<Settings />} />
           </Route>
-          <Route element={<RequireAuth allowedRoles={[ROLES.ADMIN]} />}>
+          <Route
+            element={<RequireAuth user={user} allowedRoles={[ROLES.ADMIN]} />}
+          >
             <Route
               exact
               path="/register-by-admin"
@@ -50,7 +52,10 @@ export default function App() {
           {/* test-driven routes */}
           <Route
             element={
-              <RequireAuth allowedRoles={[ROLES.ADMIN, ROLES.MODERATOR]} />
+              <RequireAuth
+                user={user}
+                allowedRoles={[ROLES.ADMIN, ROLES.MODERATOR]}
+              />
             }
           >
             <Route exact path="/couleur" element={<Couleur />} />

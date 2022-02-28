@@ -33,7 +33,7 @@ export default function makeLocalStorageSlice(
         get()[state]
       ),
     [`setLocalStorage${_state}`]: () =>
-      localStorage.setItem(
+      window.localStorage.setItem(
         get()[`${state}TagName`],
         JSON.stringify(get()[state])
       ),
@@ -43,11 +43,11 @@ export default function makeLocalStorageSlice(
       get()[`setLocalStorage${_state}`]();
     },
     [`initiate${_state}`]: () => {
-      if (!localStorage.getItem(get()[`${state}TagName`])) {
+      if (!window.localStorage.getItem(get()[`${state}TagName`])) {
         get()[`setLocalStorage${_state}`](get()[state]);
       } else {
         get()[`update${_state}`](
-          JSON.parse(localStorage.getItem(get()[`${state}TagName`]))
+          JSON.parse(window.localStorage.getItem(get()[`${state}TagName`]))
         );
       }
       get()[`setDocument${_state}`]();

@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
-import api from "services/api";
+import instanciateApi from "services/api";
 import { useStore } from "store";
 
 export default function ProfileNavItem({
@@ -24,8 +24,10 @@ export default function ProfileNavItem({
 }) {
   const { removeUser } = useStore();
   const toast = useToast();
-  const toastId = "sign-out";
+  const toastId = link;
   const navigate = useNavigate();
+  const api = instanciateApi();
+
   const onSignOut = async () => {
     let isSignedOut = false;
     let errorMsg = "";

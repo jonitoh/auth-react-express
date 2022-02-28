@@ -45,7 +45,7 @@ class BaseApi {
           config: { method, url },
         } = response;
         if (showLog) {
-          console.log(`METHOD=${method} SERVICEURL=${url} STATUS=${status}`);
+          console.log(`METHOD=${method} SERVICE=${url} STATUS=${status}`);
         }
 
         return response;

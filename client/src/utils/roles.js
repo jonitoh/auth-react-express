@@ -6,4 +6,15 @@ const ROLES = {
   BASIC: "basic",
 };
 
-export default ROLES;
+const getImgSrcFromRoles = (roles, src, roleName) => {
+  if (src) {
+    return src;
+  }
+  const altImg = roles.find((r) => r.name === roleName);
+  if (altImg) {
+    return altImg.src;
+  }
+  return "";
+};
+
+export { ROLES, getImgSrcFromRoles };

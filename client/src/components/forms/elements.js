@@ -11,11 +11,11 @@ import {
 } from "@chakra-ui/react";
 import { FiInfo, FiCheck, FiX } from "react-icons/fi";
 
-const Alert = ({ ref, status, message }) => (
-  <Box ref={ref} my={4} aria-live="assertive">
+const Alert = ({ myRef, status, message, children }) => (
+  <Box ref={myRef} my={4} aria-live="assertive">
     <ChakraAlert status={status} borderRadius={4}>
       <AlertIcon />
-      <AlertDescription>{message}</AlertDescription>
+      <AlertDescription>{message || children}</AlertDescription>
     </ChakraAlert>
   </Box>
 );

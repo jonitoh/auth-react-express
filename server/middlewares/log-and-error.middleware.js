@@ -22,7 +22,7 @@ const fileLogger = (message, logName) => {
 const logHandler = (req, res, next) => {
   const message = `${req.method}\t${req.headers.origin}\t${req.url}`;
   fileLogger(message, "reqLog.txt");
-  console.log(`METHOD=${req.method} SERVICEURL=${req.path}`);
+  console.log(`METHOD=${req.method} SERVICE=${req.path}`);
   next();
 };
 

@@ -19,18 +19,20 @@ import {
 
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { Alert, FormLabel } from "./elements";
-import api from "../../services/api";
+import instanciateApi from "../../services/api";
 import { useStore } from "store";
 
 export default function SignInForm() {
-  const { setUser } = useStore();
+  const { isValidUser, useUser } = useStore();
   // navigation after sign in
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+  const api = instanciateApi();
 
-  // references for focus on error
+  // references for focus on error or already signed alert
   const errorRef = useRef();
+  const infoRef = useRef();
 
   // info for sign-in
   const [email, setEmail] = useState("");
@@ -46,6 +48,7 @@ export default function SignInForm() {
   // manage login process
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [user, setUser] = useUser();
 
   const [onCredentials, setOnCredentials] = useState(true);
   const handleUserLoginChoice = () => setOnCredentials(!onCredentials);
@@ -127,7 +130,7 @@ export default function SignInForm() {
     if (isSignedIn) {
       setTimeout(() => {
         navigate(from, { replace: true });
-      }, 3000);
+      }, 2000);
     }
   };
 
@@ -141,7 +144,16 @@ export default function SignInForm() {
       <Box p={8} minW="400px" borderWidth={1} borderRadius={8} boxShadow="lg">
         <Box textAlign="center">
           {errorMsg && (
-            <Alert ref={errorRef} status="error" message={errorMsg} />
+            <Alert myRef={errorRef} status="error" message={errorMsg} />
+          )}
+          {isValidUser(user) && (
+            <Alert myRef={infoRef} status="warning">
+              <Text>
+                <Link as={RouterLink} to={from}>
+                  Sign in as {user.username} ?
+                </Link>
+              </Text>
+            </Alert>
           )}
           <Heading>Sign In to your account</Heading>
         </Box>
@@ -245,7 +257,7 @@ export default function SignInForm() {
             <Text>
               Need an Account ?
               <Link as={RouterLink} to="/register">
-                Sign In
+                Register
               </Link>
             </Text>
           </Flex>

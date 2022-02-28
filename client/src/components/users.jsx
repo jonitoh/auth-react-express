@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Heading } from "@chakra-ui/react";
-import api from "services/api";
+import instanciateApi from "services/api";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Users() {
   const [users, setUsers] = useState();
   const navigate = useNavigate();
   const location = useLocation();
+  const api = instanciateApi();
 
   useEffect(() => {
     let isMounted = true;
@@ -31,7 +32,7 @@ export default function Users() {
       isMounted = false;
       controller.abort();
     };
-  }, []);
+  }, [location, navigate, api]);
 
   return (
     <article>

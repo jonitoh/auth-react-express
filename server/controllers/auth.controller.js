@@ -12,7 +12,7 @@ const {
 const { handleMessageForResponse } = require("../utils");
 
 const refreshToken = async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken;
+  const refreshToken = req.signedCookies?.refreshToken;
   if (!refreshToken) {
     return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }
@@ -199,7 +199,7 @@ signInWithExistingCookie: no useful since we have in middelware authentificateTo
 
 const signOut = async (req, res) => {
   //
-  const refreshToken = req.cookies?.refreshToken;
+  const refreshToken = req.signedCookies?.refreshToken;
 
   if (!refreshToken) {
     return handleMessageForResponse("NO_REFRESH_TOKEN", res, 204);
@@ -213,14 +213,16 @@ const signOut = async (req, res) => {
   }
 
   // send response
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    signed: true,
-  });
-  return res.status(204).send({
-    isSignedOut: true,
-    message: "SIGNOUT",
-  });
+  return res
+    .status(200)
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      signed: true,
+    })
+    .send({
+      isSignedOut: true,
+      message: "SIGN_OUT",
+    });
 };
 
 module.exports = {

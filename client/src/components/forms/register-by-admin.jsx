@@ -26,7 +26,7 @@ import {
   validateProductKey,
 } from "./elements";
 import instanciateApi from "../../services/api";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
 
 export default function RegisterByAdminForm() {
   // navigation after sign in
@@ -35,7 +35,7 @@ export default function RegisterByAdminForm() {
   const from = location.state?.from?.pathname || "/";
   const api = instanciateApi();
 
-  const { setUser } = useStore();
+  //const { } = useStoreFromSelector();
   // references for focus on user input and error
   const registerRef = useRef();
   const errorRef = useRef();
@@ -135,7 +135,7 @@ export default function RegisterByAdminForm() {
       });
       console.log("response", response);
       isRegistered = response?.data?.isRegistered;
-      setUser(response?.data?.user);
+      //setUser(response?.data?.user);
       console.log(
         "Successful registration! You'll be redirect to the home page in a few seconds."
       );

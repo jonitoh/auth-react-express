@@ -16,18 +16,26 @@ import {
   Divider,
   Checkbox,
 } from "@chakra-ui/react";
-
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { Alert, FormLabel } from "./elements";
 import instanciateApi from "../../services/api";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
+import { extractPathFromLocation } from "utils/function";
+
+// Selector for extracting global state
+const useStoreSelector = (state) => ({
+  isValidUser: state.isValidUser,
+  setAccessToken: state.setAccessToken,
+  useUser: state.useUser,
+});
 
 export default function SignInForm() {
-  const { isValidUser, useUser } = useStore();
+  const { isValidUser, setAccessToken, useUser } =
+    useStoreFromSelector(useStoreSelector);
   // navigation after sign in
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+  const from = extractPathFromLocation(location, "/", "/sign-in");
   const api = instanciateApi();
 
   // references for focus on error or already signed alert
@@ -100,6 +108,7 @@ export default function SignInForm() {
       });
       isSignedIn = !!response?.data?.isSignedIn;
       setUser(response?.data?.user);
+      setAccessToken(response?.data?.accessToken);
       console.log(
         "Successful sign in! You'll be redirect to the home page in a few seconds."
       );
@@ -128,9 +137,9 @@ export default function SignInForm() {
     }
 
     if (isSignedIn) {
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 2000);
+      console.log("so it's signed in");
+      console.log("from", from);
+      navigate(from, { replace: true });
     }
   };
 

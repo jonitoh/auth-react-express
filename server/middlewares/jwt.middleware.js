@@ -37,7 +37,7 @@ const authentificateAccessToken = (req, res, next) => {
 };
 
 const authentificateRefreshToken = (req, res, next) => {
-  const token = req.cookies?.refreshToken;
+  const token = req.signedCookies?.refreshToken;
   if (!token) {
     return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }

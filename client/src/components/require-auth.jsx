@@ -1,13 +1,16 @@
 import React from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
+
+// Selector for extracting global state
+const useStoreSelector = (state) => ({
+  hasRight: state.hasRight,
+  isValidUser: state.isValidUser,
+});
 
 export default function RequireAuth({ user, allowedRoles }) {
-  const { hasRight, isValidUser } = useStore();
+  const { hasRight, isValidUser } = useStoreFromSelector(useStoreSelector);
   const location = useLocation();
-  console.log("curr user", user);
-  console.log("curr right", hasRight(user?.roleName, allowedRoles));
-  console.log("user valid ?", isValidUser(user));
   return hasRight(user?.roleName, allowedRoles) ? (
     <Outlet />
   ) : isValidUser(user) ? (

@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
 import RequireAuth from "components/require-auth";
 import SignIn from "pages/sign-in";
 import SignOut from "pages/sign-out";
@@ -17,8 +17,16 @@ import Couleur from "pages/couleurs";
 import Test from "pages/test";
 import { ROLES } from "utils/roles";
 
+// Selector for extracting global state
+const useStoreSelector = (state) => ({
+  useTheme: state.useTheme,
+  getChakraTheme: state.getChakraTheme,
+  useUser: state.useUser,
+});
+
 export default function App() {
-  const { useTheme, getChakraTheme, useUser } = useStore();
+  const { useTheme, getChakraTheme, useUser } =
+    useStoreFromSelector(useStoreSelector);
 
   const [themeName] = useTheme();
   const theme = getChakraTheme(themeName);

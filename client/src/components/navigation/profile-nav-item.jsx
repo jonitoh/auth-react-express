@@ -11,7 +11,10 @@ import {
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import instanciateApi from "services/api";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
+
+// Selector for extracting global state
+const useStoreSelector = (state) => state.removeUser;
 
 export default function ProfileNavItem({
   isSizeSmall,
@@ -22,7 +25,8 @@ export default function ProfileNavItem({
   showIcon = true,
   withClick = true,
 }) {
-  const { removeUser } = useStore();
+  const removeUser = useStoreFromSelector(useStoreSelector);
+
   const toast = useToast();
   const toastId = link;
   const navigate = useNavigate();
@@ -33,22 +37,17 @@ export default function ProfileNavItem({
     let errorMsg = "";
     try {
       const response = await api.authApi.signOut();
-      console.log("response", response);
-      console.log("should sign out");
-      isSignedOut = response.data.isSignedOut;
-      console.log("isSignedOut", isSignedOut);
+      isSignedOut = !!response?.data?.isSignedOut;
       removeUser();
     } catch (error) {
-      console.log("fuck it", error);
       errorMsg = error.message;
     }
     if (isSignedOut) {
-      setTimeout(() => {
-        navigate(link, { replace: true });
-      }, 3000);
+      navigate(link);
     }
+
     if (errorMsg && !toast.isActive(toastId)) {
-      // create toast
+      // create toast to explain the sign-out bug
       toast({
         id: toastId,
         title: "Error in sign out.",
@@ -59,7 +58,6 @@ export default function ProfileNavItem({
         isClosable: true,
       });
     }
-    // open a dialog to explain th sign out bug
   };
   return (
     <Flex mt={4} align="center">

@@ -28,11 +28,8 @@ const getInfo = async (req, res) => {
 };
 
 const getAllInfo = async (req, res) => {
-  console.log("in all info");
   try {
-    console.log("in try");
     const users = await User.find({});
-    console.log("users?", users);
     if (!users) {
       return handleMessageForResponse("UNFOUND_USERS", res, 500);
     }

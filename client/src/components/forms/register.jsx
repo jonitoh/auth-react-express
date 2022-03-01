@@ -26,16 +26,26 @@ import {
   validateProductKey,
 } from "./elements";
 import instanciateApi from "../../services/api";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
+import { extractPathFromLocation } from "utils/function";
+
+// Selector for extracting global state
+const useStoreSelector = (state) => ({
+  setUser: state.setUser,
+  setAccessToken: state.setAccessToken,
+});
 
 export default function RegisterForm() {
   // navigation after sign in
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+  const from = extractPathFromLocation(location, "/", [
+    "/register",
+    "/sign-up",
+  ]);
   const api = instanciateApi();
 
-  const { setUser } = useStore();
+  const { setUser, setAccessToken } = useStoreFromSelector(useStoreSelector);
   // references for focus on user input and error
   const registerRef = useRef();
   const errorRef = useRef();
@@ -129,6 +139,7 @@ export default function RegisterForm() {
       console.log("response", response);
       isRegistered = response?.data?.isRegistered;
       setUser(response?.data?.user);
+      setAccessToken(response?.data?.accessToken);
       console.log(
         "Successful registration! You'll be redirect to the home page in a few seconds."
       );
@@ -152,9 +163,7 @@ export default function RegisterForm() {
     }
 
     if (isRegistered) {
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 3000);
+      navigate(from, { replace: true });
     }
   };
 

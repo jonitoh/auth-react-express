@@ -4,19 +4,24 @@ import ResponsiveSidebar from "../sidebar/responsive-sidebar";
 import Header from "../header";
 import NotificationMenu from "../notification/notification-menu";
 import UserProfile from "../user-profile";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
 import navItems from "data/nav-items";
 
+// Selectors for extracting global state
+const useStoreSelector = (state) => ({
+  hasRight: state.hasRight,
+  updateNotification: state.updateNotification,
+  removeNotification: state.removeNotification,
+});
+const userSelector = (state) => state.user;
+const notificationsSelector = (state) => state.notifications;
+
 export default function MainLayout({ children, showNotification = true }) {
-  const {
-    user,
-    notifications,
-    hasRight,
-    updateNotification,
-    removeNotification,
-  } = useStore();
-  //const user = getUser();
-  console.log("user??", user);
+  const { hasRight, updateNotification, removeNotification } =
+    useStoreFromSelector(useStoreSelector);
+  const user = useStoreFromSelector(userSelector);
+  const notifications = useStoreFromSelector(notificationsSelector);
+
   const filteredNavItems = navItems.filter((it) =>
     hasRight(user.roleName, it.authRoles)
   );

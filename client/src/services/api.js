@@ -28,6 +28,16 @@ class BaseApi {
       // should be made using credentials
       withCredentials: true,
 
+      // `validateStatus` defines whether to resolve or reject the promise for a given
+      // HTTP response status code. If `validateStatus` returns `true` (or is set to `null`
+      // or `undefined`), the promise will be resolved; otherwise, the promise will be
+      // rejected.
+      validateStatus: function (status) {
+        console.log("status", status);
+        console.log("is ok?", status >= 200 && status < 300);
+        return status >= 200 && status < 300; // default
+      },
+
       // `maxRedirects` defines the maximum number of redirects to follow in node.js.
       // If set to 0, no redirects will be followed.
       maxRedirects: 5,
@@ -52,6 +62,7 @@ class BaseApi {
       },
       // automatically refresh the tokens
       async (error) => {
+        console.log("&&error", error);
         const originalRequest = error.config;
         if (
           error.config.url !== "/refresh-token" &&

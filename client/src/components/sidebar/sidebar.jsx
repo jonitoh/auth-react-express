@@ -9,7 +9,11 @@ import NavItem from "../navigation/nav-item";
 import NavDropdown from "../navigation/nav-dropdown";
 import ProfileNavItem from "../navigation/profile-nav-item";
 import Logo from "../logo";
-import { useStore } from "store";
+import { useStoreFromSelector } from "store";
+
+// Selectors for extracting global state
+const setSectionSelector = (state) => state.setSection;
+const isSectionActiveSelector = (state) => state.isSectionActive;
 
 const MainMenuIcon = ({
   isSizeSmall,
@@ -89,8 +93,10 @@ export default function Sidebar({
   navItems,
   ...rest
 }) {
+  const setSection = useStoreFromSelector(setSectionSelector);
+  const isSectionActive = useStoreFromSelector(isSectionActiveSelector);
+
   const [isSizeSmall, setSize] = useState(false);
-  const { setSection, isSectionActive } = useStore();
 
   const clickMainMenuIcon = () => {
     onClickMainMenuIcon();

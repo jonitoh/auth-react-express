@@ -61,7 +61,6 @@ export default function userSlice(set, get) {
 
     //actions
     setAccessToken: (accessToken) => set({ accessToken }),
-    getUser: () => get().user,
     isValidUser: (user) => !isEmpty(user),
     updateUser: (user) =>
       get().isValidUser(user) &&

@@ -22,7 +22,6 @@ const extractPathFromLocation = function (
     );
   }
   const from = location.state?.from?.pathname;
-  console.log("from?", from);
   if (!from || excludedPaths.includes(from)) {
     return defaultPath;
   }

@@ -15,9 +15,11 @@ const handleTokenErrorForResponse = (err, res) => {
 };
 
 const authentificateAccessToken = (req, res, next) => {
-  const authHeader = req.headers.authorization || req.headers.Authorization;
+  console.log("into authentificateAccessToken");
+  const authHeader = req.headers.Authorization || req.headers.authorization;
   const token = extractTokenFromHeader(authHeader);
   if (!token) {
+    console.log("no freaking token");
     return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }
   verifyAccessToken(token, (err, decoded) => {

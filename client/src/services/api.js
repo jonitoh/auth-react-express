@@ -3,12 +3,23 @@ import { useStore } from "store";
 
 class BaseApi {
   constructor(showLog = true) {
+    this._accessToken = "";
+    this.setAccessToken(useStore.getState().accessToken);
     this.instance = this.initiateInstance(showLog);
   }
 
+  setAccessToken = (token) => {
+    if (token) {
+      this._accessToken = token;
+    }
+  };
+
+  deleteAccessToken = () => {
+    this._accessToken = "";
+  };
+
   initiateInstance = (showLog) => {
-    // retrieve accessToken
-    const accessToken = useStore.getState().accessToken;
+    //console.log("tok", this._accessToken);
     // create an instance with axios
     const instance = axios.create({
       // `baseURL` will be prepended to `url` unless `url` is absolute.
@@ -33,8 +44,6 @@ class BaseApi {
       // or `undefined`), the promise will be resolved; otherwise, the promise will be
       // rejected.
       validateStatus: function (status) {
-        console.log("status", status);
-        console.log("is ok?", status >= 200 && status < 300);
         return status >= 200 && status < 300; // default
       },
 
@@ -43,8 +52,10 @@ class BaseApi {
       maxRedirects: 5,
     });
 
-    // set the authorization header
-    instance.defaults.headers.common["authorization"] = `Bearer ${accessToken}`;
+    // set the Authorization header
+    instance.defaults.headers.common[
+      "Authorization"
+    ] = `Bearer ${this._accessToken}`;
 
     // take advantage of interceptors: methods which are triggered before the main method
     instance.interceptors.response.use(
@@ -63,7 +74,9 @@ class BaseApi {
       // automatically refresh the tokens
       async (error) => {
         console.log("&&error", error);
+
         const originalRequest = error.config;
+        console.log("originalRequest", originalRequest);
         if (
           error.config.url !== "/refresh-token" &&
           error.response.status === 401 &&
@@ -73,15 +86,17 @@ class BaseApi {
           originalRequest._retry = true;
           try {
             const response = await instance.get("/refresh-token");
-            console.log("is the token refreshed?", response?.isTokenResfreshed);
+            console.log(
+              "is the token refreshed?",
+              !!response?.isTokenResfreshed
+            );
             const newAccessToken = response?.accessToken;
             useStore.setState({ accessToken: newAccessToken });
-            instance.defaults.headers.common[
-              "authorization"
-            ] = `Bearer ${newAccessToken}`;
-            originalRequest.headers[
-              "authorization"
-            ] = `Bearer ${newAccessToken}`;
+            this.setAccessToken(newAccessToken);
+            const newAuthorization = `Bearer ${newAccessToken}`;
+            instance.defaults.headers.common["Authorization"] =
+              newAuthorization;
+            originalRequest.headers["Authorization"] = newAuthorization;
           } catch (error) {
             console.log(
               `Error during the refreshing token process (status ${error.response.status}):\n${error.message}`

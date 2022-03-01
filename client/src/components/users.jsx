@@ -18,11 +18,12 @@ export default function Users() {
         const response = await api.userApi.getAllInfo({
           signal: controller.signal,
         });
+        console.log("resp", response);
         console.log("data?", response.data);
         isMounted && setUsers(response.data.users);
       } catch (error) {
         console.error(error);
-        navigate("/sign-in", { state: { from: location }, replace: true });
+        //navigate("/", { state: { from: location }, replace: true });
       }
     };
 

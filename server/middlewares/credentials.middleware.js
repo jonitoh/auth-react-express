@@ -9,7 +9,7 @@ const checkHeader = (req, res, next) => {
   res.header("Content-Type", "application/json;charset=UTF-8");
   res.header(
     "Access-Control-Allow-Headers",
-    "authorization, Origin, Content-Type, Accept"
+    "Authorization, Origin, Content-Type, Accept"
   );
   next();
 };

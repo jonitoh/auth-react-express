@@ -63,7 +63,7 @@ const navItems = [
     type: "item",
     icon: FiDollarSign,
     title: "Stocks",
-    link: "/test",
+    link: "/stats",
     id: "stocks",
     authRoles: ["admin"],
   },

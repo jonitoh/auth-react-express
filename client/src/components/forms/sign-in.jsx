@@ -139,7 +139,7 @@ export default function SignInForm() {
     if (isSignedIn) {
       console.log("so it's signed in");
       console.log("from", from);
-      navigate(from, { replace: true });
+      navigate(from);
     }
   };
 

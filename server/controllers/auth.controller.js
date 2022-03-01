@@ -12,12 +12,15 @@ const {
 const { handleMessageForResponse } = require("../utils");
 
 const refreshToken = async (req, res) => {
+  console.log("into refreshToken of shit");
   const refreshToken = req.signedCookies?.refreshToken;
+  console.log("refreshToken?", refreshToken);
   if (!refreshToken) {
     return handleMessageForResponse("NO_TOKEN_PROVIDED", res, 401);
   }
 
   const user = await User.findOne({ refreshToken });
+  console.log("user?", user);
   if (!user) {
     return handleMessageForResponse(
       "NO_USER_LINKED_TO_TOKEN_PROVIDED",
@@ -26,7 +29,11 @@ const refreshToken = async (req, res) => {
     );
   }
 
+  console.log("about to verify token");
   verifyRefreshToken(refreshToken, (err, decoded) => {
+    console.log("err?", err);
+    console.log("decoded?", decoded);
+    console.log("2nd test", user._id !== decoded.id);
     if (err || user._id !== decoded.id) {
       return handleMessageForResponse("UNAUTHORIZED", res, 401);
     }

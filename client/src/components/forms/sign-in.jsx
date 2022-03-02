@@ -19,19 +19,21 @@ import {
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { Alert, FormLabel } from "./elements";
 import instanciateApi from "../../services/api";
-import { useStoreFromSelector } from "store";
+import store from "store";
 import { extractPathFromLocation } from "utils/function";
 
-// Selector for extracting global state
-const useStoreSelector = (state) => ({
+// Selectors for extracting global state
+const userSelector = (state) => state.user;
+const otherSelector = (state) => ({
   isValidUser: state.isValidUser,
   setAccessToken: state.setAccessToken,
-  useUser: state.useUser,
+  setUser: state.setUser,
 });
 
 export default function SignInForm() {
-  const { isValidUser, setAccessToken, useUser } =
-    useStoreFromSelector(useStoreSelector);
+  const { isValidUser, setAccessToken, setUser } =
+    store.fromSelector(otherSelector);
+  const user = store.fromSelector(userSelector);
   // navigation after sign in
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,7 +58,6 @@ export default function SignInForm() {
   // manage login process
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [user, setUser] = useUser();
 
   const [onCredentials, setOnCredentials] = useState(true);
   const handleUserLoginChoice = () => setOnCredentials(!onCredentials);
@@ -136,11 +137,7 @@ export default function SignInForm() {
       clearAll();
     }
 
-    if (isSignedIn) {
-      console.log("so it's signed in");
-      console.log("from", from);
-      navigate(from);
-    }
+    isSignedIn && navigate(from);
   };
 
   // useEffects

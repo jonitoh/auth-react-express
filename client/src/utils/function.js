@@ -27,4 +27,16 @@ const extractPathFromLocation = function (
   }
   return from;
 };
-export { isEmpty, extractPathFromLocation };
+
+const sortFromDate = function (
+  items,
+  getDate = (item) => item,
+  ascending = true
+) {
+  const factor = ascending ? 1 : -1;
+  return [...items].sort(
+    (a, b) => factor * (getDate(a) - getDate(b) > 0 ? 1 : -1)
+  );
+};
+
+export { isEmpty, extractPathFromLocation, sortFromDate };

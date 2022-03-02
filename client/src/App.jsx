@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
 import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useStoreFromSelector } from "store";
+import store from "store";
 import RequireAuth from "components/require-auth";
 import SignIn from "pages/sign-in";
 import SignOut from "pages/sign-out";
@@ -17,21 +17,32 @@ import Couleur from "pages/couleurs";
 import Test from "pages/test";
 import { ROLES } from "utils/roles";
 
-// Selector for extracting global state
-const useStoreSelector = (state) => ({
-  useTheme: state.useTheme,
+// Selectors for extracting global state
+const themeSelector = (state) => ({
+  theme: state.theme,
   getChakraTheme: state.getChakraTheme,
-  useUser: state.useUser,
 });
+const userSelector = (state) => state.user;
 
 export default function App() {
-  const { useTheme, getChakraTheme, useUser } =
-    useStoreFromSelector(useStoreSelector);
+  const { theme: themeName, getChakraTheme } =
+    store.fromSelector(themeSelector);
+  const user = store.fromSelector(userSelector);
 
-  const [themeName] = useTheme();
   const theme = getChakraTheme(themeName);
 
-  const [user] = useUser();
+  useEffect(() => {
+    console.log("initiate the app");
+    store.initiate();
+    console.log("user?", user);
+    console.log("themename?", themeName);
+
+    return () => {
+      console.log("clear the app");
+      //store.clear();
+    };
+  }, []);
+
   return (
     <ChakraProvider theme={theme} resetCSS={true}>
       <BrowserRouter>

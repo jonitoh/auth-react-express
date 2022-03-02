@@ -2,7 +2,6 @@
 State management for theming in the application.
 */
 import { themes } from "../theme";
-import { useAdvancedLocalStorage } from "hooks/useLocalStorage";
 
 export default function themeSlice(set, get) {
   return {
@@ -14,22 +13,25 @@ export default function themeSlice(set, get) {
     //actions
     getChakraTheme: (theme) =>
       get().themes.find(({ name }) => name === theme)?.theme,
-    getAllThemesAsLists: () => get().themes.map(({ name }) => name),
-    getAllThemesAsOptions: () =>
+    getThemesAsList: () => get().themes.map(({ name }) => name),
+    getThemesAsOptions: () =>
       get().themes.map(({ name, label }) => ({
         value: name,
         label,
       })),
-    updateTheme: (theme) => {
-      document.documentElement.setAttribute(get().themeTagName, theme);
-      return set({ theme });
+    setTheme: (theme) => get().updateTheme(theme) && set({ theme }),
+    updateTheme: (theme) =>
+      document.documentElement.setAttribute(get().themeTagName, theme),
+    _clearTheme: () => set({ theme: process.env.THEME || "summer-splash" }),
+    _initiateTheme: () => null,
+    // persist options
+    _persistTheme: {
+      partialize: (state) => ({ theme: state.theme }),
+      merge: (persistedState, currentState) => {
+        const { theme } = persistedState;
+        currentState.updateTheme(theme);
+        return { ...currentState, ...{ theme } };
+      },
     },
-    useTheme: () =>
-      useAdvancedLocalStorage(
-        get().themeTagName,
-        get().theme,
-        get().updateTheme
-      ),
-    removeTheme: () => window.localStorage.removeItem(get().themeTagName),
   };
 }

@@ -11,10 +11,10 @@ import {
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import instanciateApi from "services/api";
-import { useStoreFromSelector } from "store";
+import store from "store";
 
 // Selector for extracting global state
-const useStoreSelector = (state) => state.removeUser;
+const userSelector = (state) => state.removeUser;
 
 export default function ProfileNavItem({
   isSizeSmall,
@@ -25,7 +25,7 @@ export default function ProfileNavItem({
   showIcon = true,
   withClick = true,
 }) {
-  const removeUser = useStoreFromSelector(useStoreSelector);
+  const removeUser = store.fromSelector(userSelector);
 
   const toast = useToast();
   const toastId = link;

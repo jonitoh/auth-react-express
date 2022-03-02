@@ -14,7 +14,7 @@ import {
   Spacer,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
-import { useStoreFromSelector } from "store";
+import store from "store";
 
 const Tag = ({ text, mainColor, ...props }) => {
   return (
@@ -26,16 +26,16 @@ const Tag = ({ text, mainColor, ...props }) => {
   );
 };
 // Selector for extracting global state
-const useStoreSelector = (state) => ({
-  getAllThemesAsOptions: state.getAllThemesAsOptions,
+const themeSelector = (state) => ({
+  getThemesAsOptions: state.getThemesAsOptions,
   setTheme: state.setTheme,
   theme: state.theme,
 });
 
 const Test = () => {
-  const { getAllThemesAsOptions, setTheme, theme } =
-    useStoreFromSelector(useStoreSelector);
-  const options = getAllThemesAsOptions();
+  const { getThemesAsOptions, setTheme, theme } =
+    store.fromSelector(themeSelector);
+  const options = getThemesAsOptions();
   const defaultOption = options.find(({ value }) => value === theme);
   console.log("opts", options);
   console.log("def opts", defaultOption);

@@ -1,10 +1,10 @@
 import axios from "axios";
-import { useStore } from "store";
+import store from "store";
 
 class BaseApi {
   constructor(showLog = true) {
     this._accessToken = "";
-    this.setAccessToken(useStore.getState().accessToken);
+    this.setAccessToken(store.use.getState().accessToken);
     this.instance = this.initiateInstance(showLog);
   }
 
@@ -91,7 +91,7 @@ class BaseApi {
               !!response?.isTokenResfreshed
             );
             const newAccessToken = response?.accessToken;
-            useStore.setState({ accessToken: newAccessToken });
+            store.use.setState({ accessToken: newAccessToken });
             this.setAccessToken(newAccessToken);
             const newAuthorization = `Bearer ${newAccessToken}`;
             instance.defaults.headers.common["Authorization"] =

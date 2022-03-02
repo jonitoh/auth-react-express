@@ -26,7 +26,6 @@ import {
   validateProductKey,
 } from "./elements";
 import instanciateApi from "../../services/api";
-import { useStoreFromSelector } from "store";
 
 export default function RegisterByAdminForm() {
   // navigation after sign in
@@ -35,7 +34,6 @@ export default function RegisterByAdminForm() {
   const from = location.state?.from?.pathname || "/";
   const api = instanciateApi();
 
-  //const { } = useStoreFromSelector();
   // references for focus on user input and error
   const registerRef = useRef();
   const errorRef = useRef();

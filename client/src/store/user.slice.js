@@ -2,10 +2,8 @@
 State management for user persistence regarding custom choices and authorization in the application.
 */
 import roles from "data/roles";
-import { useAdvancedLocalStorage } from "hooks/useLocalStorage";
 import { ROLES, getImgSrcFromRoles } from "utils/roles";
 import { isEmpty } from "utils/function";
-
 /*
 const fakeUser = {
   username: "Fusername",
@@ -18,69 +16,16 @@ const fakeUser = {
 };
 fakeUser.imgSrc = getImgSrcFromRoles(roles, fakeUser.imgSrc, fakeUser.roleName);
 */
-const fakeNotifications = [
-  {
-    id: "1",
-    date: "22/02/2022",
-    content: {
-      title: "my notif -- 1",
-      message: "random message",
-    },
-    read: false,
-    level: "basic",
-  },
-  {
-    id: "2",
-    date: "23/02/2022",
-    content: {
-      title: "my notif  -- 2",
-      message: "random message",
-    },
-    read: false,
-    level: "basic",
-  },
-  {
-    id: "3",
-    date: "20/02/2022",
-    content: {
-      title: "my notif -- 3",
-      message: "random message",
-    },
-    read: false,
-    level: "basic",
-  },
-];
 
 export default function userSlice(set, get) {
   return {
     //states
     user: null,
-    userTagName: "current-user",
-    notifications: fakeNotifications, //[],
-    accessToken: "",
 
     //actions
-    setAccessToken: (accessToken) => set({ accessToken }),
     isValidUser: (user) => !isEmpty(user),
-    updateUser: (user) =>
-      get().isValidUser(user) &&
-      set({
-        user: {
-          ...user,
-          imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
-        },
-      }),
-    useUser: () =>
-      useAdvancedLocalStorage(
-        get().userTagName,
-        get().user,
-        get().updateUser,
-        get().updateUser
-      ),
-    removeUser: () => {
-      window.localStorage.removeItem(get().userTagName);
-      return set({ user: null });
-    },
+    setUser: (user) => get().isValidUser(user) && set({ user }),
+    _clearUser: () => set({ user: null }),
     hasRight: (roleName, authRoles, isStrict = true) => {
       // if authRoles undefined or not an array, we put a default list
       let myAllowedRoles = Object.values(ROLES);
@@ -100,26 +45,24 @@ export default function userSlice(set, get) {
       }
       return myAllowedRoles.includes(roleName);
     },
-    addNotification: () => {},
-    removeNotification: (id) => {
-      console.log(`We're removing notification with id ${id}`);
-      return set((state) => ({
-        notifications: state.notifications.filter((n) => n.id !== id),
-      }));
-    },
-    updateNotification: (id, data) => {
-      console.log(`We're updating notification with id ${id}`);
-      return set((state) => {
-        const idx = state.notifications.findIndex((n) => n.id === id);
-        if (idx !== -1) {
-          const newNotifications = [...state.notifications];
-          newNotifications[idx] = { ...state.notifications[idx], ...data };
-          return {
-            notifications: newNotifications,
-          };
-        }
-        return state;
-      });
+    _initiateUser: () => null,
+    // persist options
+    _persistUser: {
+      partialize: (state) => ({
+        user: state.user,
+      }),
+      merge: (persistedState, currentState) => {
+        const { user } = persistedState;
+        return {
+          ...currentState,
+          ...{
+            user: {
+              ...user,
+              imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
+            },
+          },
+        };
+      },
     },
   };
 }

@@ -9,7 +9,7 @@ import NavItem from "../navigation/nav-item";
 import NavDropdown from "../navigation/nav-dropdown";
 import ProfileNavItem from "../navigation/profile-nav-item";
 import Logo from "../logo";
-import { useStoreFromSelector } from "store";
+import store from "store";
 
 // Selectors for extracting global state
 const setSectionSelector = (state) => state.setSection;
@@ -93,8 +93,8 @@ export default function Sidebar({
   navItems,
   ...rest
 }) {
-  const setSection = useStoreFromSelector(setSectionSelector);
-  const isSectionActive = useStoreFromSelector(isSectionActiveSelector);
+  const setSection = store.fromSelector(setSectionSelector);
+  const isSectionActive = store.fromSelector(isSectionActiveSelector);
 
   const [isSizeSmall, setSize] = useState(false);
 

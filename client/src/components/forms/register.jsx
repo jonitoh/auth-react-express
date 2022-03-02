@@ -26,11 +26,11 @@ import {
   validateProductKey,
 } from "./elements";
 import instanciateApi from "../../services/api";
-import { useStoreFromSelector } from "store";
+import store from "store";
 import { extractPathFromLocation } from "utils/function";
 
 // Selector for extracting global state
-const useStoreSelector = (state) => ({
+const selector = (state) => ({
   setUser: state.setUser,
   setAccessToken: state.setAccessToken,
 });
@@ -45,7 +45,7 @@ export default function RegisterForm() {
   ]);
   const api = instanciateApi();
 
-  const { setUser, setAccessToken } = useStoreFromSelector(useStoreSelector);
+  const { setUser, setAccessToken } = store.fromSelector(selector);
   // references for focus on user input and error
   const registerRef = useRef();
   const errorRef = useRef();

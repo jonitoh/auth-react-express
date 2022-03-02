@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Heading } from "@chakra-ui/react";
 import instanciateApi from "services/api";
-import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Users() {
   const [users, setUsers] = useState();
-  const navigate = useNavigate();
-  const location = useLocation();
   const api = instanciateApi();
 
   useEffect(() => {
@@ -18,12 +15,10 @@ export default function Users() {
         const response = await api.userApi.getAllInfo({
           signal: controller.signal,
         });
-        console.log("resp", response);
         console.log("data?", response.data);
         isMounted && setUsers(response.data.users);
       } catch (error) {
         console.error(error);
-        //navigate("/", { state: { from: location }, replace: true });
       }
     };
 
@@ -33,7 +28,7 @@ export default function Users() {
       isMounted = false;
       controller.abort();
     };
-  }, [location, navigate, api]);
+  }, []);
 
   return (
     <article>

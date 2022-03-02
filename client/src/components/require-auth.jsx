@@ -1,15 +1,15 @@
 import React from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
-import { useStoreFromSelector } from "store";
+import store from "store";
 
 // Selector for extracting global state
-const useStoreSelector = (state) => ({
+const userSelector = (state) => ({
   hasRight: state.hasRight,
   isValidUser: state.isValidUser,
 });
 
 export default function RequireAuth({ user, allowedRoles }) {
-  const { hasRight, isValidUser } = useStoreFromSelector(useStoreSelector);
+  const { hasRight, isValidUser } = store.fromSelector(userSelector);
   const location = useLocation();
   return hasRight(user?.roleName, allowedRoles) ? (
     <Outlet />

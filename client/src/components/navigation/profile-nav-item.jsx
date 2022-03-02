@@ -14,7 +14,7 @@ import instanciateApi from "services/api";
 import store from "store";
 
 // Selector for extracting global state
-const userSelector = (state) => state.removeUser;
+const userSelector = (state) => state._clearUser;
 
 export default function ProfileNavItem({
   isSizeSmall,

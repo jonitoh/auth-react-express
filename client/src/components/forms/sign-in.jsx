@@ -137,7 +137,10 @@ export default function SignInForm() {
       clearAll();
     }
 
-    isSignedIn && navigate(from);
+    if (isSignedIn) {
+      console.log("you better move!!");
+      navigate(from);
+    }
   };
 
   // useEffects
@@ -152,7 +155,7 @@ export default function SignInForm() {
           {errorMsg && (
             <Alert myRef={errorRef} status="error" message={errorMsg} />
           )}
-          {isValidUser(user) && (
+          {isValidUser(user) && false && (
             <Alert myRef={infoRef} status="warning">
               <Text>
                 <Link as={RouterLink} to={from}>

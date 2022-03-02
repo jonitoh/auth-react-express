@@ -53,13 +53,16 @@ export default function userSlice(set, get) {
       }),
       merge: (persistedState, currentState) => {
         const { user } = persistedState;
+        const newUser = user
+          ? {
+              ...user,
+              imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
+            }
+          : {};
         return {
           ...currentState,
           ...{
-            user: {
-              ...user,
-              imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
-            },
+            user: newUser,
           },
         };
       },

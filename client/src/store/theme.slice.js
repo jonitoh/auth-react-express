@@ -29,6 +29,7 @@ export default function themeSlice(set, get) {
       partialize: (state) => ({ theme: state.theme }),
       merge: (persistedState, currentState) => {
         const { theme } = persistedState;
+        console.log("pers theme,", theme);
         currentState.updateTheme(theme);
         return { ...currentState, ...{ theme } };
       },

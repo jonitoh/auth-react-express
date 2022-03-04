@@ -16,10 +16,6 @@ import Missing from "pages/missing";
 import Couleur from "pages/couleurs";
 import Test from "pages/test";
 import { ROLES } from "utils/roles";
-/////////
-
-console.log("store", store.use.persist);
-////////
 
 // Selectors for extracting global state
 const themeSelector = (state) => ({
@@ -32,34 +28,21 @@ export default function App() {
   const { theme: themeName, getChakraTheme } =
     store.fromSelector(themeSelector);
   const user = store.fromSelector(userSelector);
-  const accessToken = store.fromSelector((state) => state.accessToken);
-  const setAccessToken = store.fromSelector((state) => state.setAccessToken);
 
   const theme = getChakraTheme(themeName);
 
   useEffect(() => {
-    console.log("initiate the app");
-    const hydrated = store.use.getState()._hasHydrated;
-    console.log("hydrated?", hydrated);
-    const name = "auth__local-storage";
-    let u = JSON.parse(localStorage.getItem(name));
-    console.log("u", u.state);
-    if (accessToken === "") {
-      setAccessToken(u.state.accessToken);
-    }
-    store.initiate();
-
-    console.log("user?", user);
-    console.log("accessToken?", accessToken);
-    console.log("themename?", themeName);
+    console.log("App initialisation");
+    const rehydrate = true;
+    store.initiate({ rehydrate });
 
     return () => {
-      console.log("clear the app");
-      //store.clear();
+      console.log("App cleansing/unsubcription");
+      store.clear();
     };
   }, []);
 
-  console.log("acc", accessToken);
+  console.log("after initialization -- user?", user);
 
   return (
     <ChakraProvider theme={theme} resetCSS={true}>

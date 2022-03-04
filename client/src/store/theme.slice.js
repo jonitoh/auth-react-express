@@ -22,16 +22,17 @@ export default function themeSlice(set, get) {
     setTheme: (theme) => get().updateTheme(theme) && set({ theme }),
     updateTheme: (theme) =>
       document.documentElement.setAttribute(get().themeTagName, theme),
+    // partial actions
     _clearTheme: () => set({ theme: process.env.THEME || "summer-splash" }),
-    _initiateTheme: () => null,
+    _isInitialValueAsTheme: () =>
+      get().theme === (process.env.THEME || "summer-splash"),
     // persist options
     _persistTheme: {
       partialize: (state) => ({ theme: state.theme }),
-      merge: (persistedState, currentState) => {
+      toMerge: (persistedState, currentState) => {
         const { theme } = persistedState;
-        console.log("pers theme,", theme);
         currentState.updateTheme(theme);
-        return { ...currentState, ...{ theme } };
+        return { theme };
       },
     },
   };

@@ -12,5 +12,13 @@ export default function persistSlice(set, get) {
         _hasHydrated: state,
       });
     },
+    // partial actions
+    _clearPersist: () => set({ _hasHydrated: false }),
+    // persist options
+    _persistPersist: {
+      onRehydrateStorage: () => (state) => {
+        state.setHasHydrated(true);
+      },
+    },
   };
 }

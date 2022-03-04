@@ -115,14 +115,16 @@ export default function notificationSlice(set, get) {
         return state;
       });
     },
+    // partial actions
+    //_initiateNotifications: () => console.log("init notif"),
     _clearNotifications: () => set({ notifications: [] }),
-    _initiateNotifications: () => null,
+    _isInitialValueAsNotifications: () => get().notifications === [],
     // persist options
-    _persistNotification: {
+    _persistNotifications: {
       partialize: (state) => ({
         notifications: state.notifications.filter((it) => !!it.isLocal),
       }),
-      merge: (persistedState, currentState) => {
+      toMerge: (persistedState, currentState) => {
         const { notifications } = persistedState;
         const availableNotificationIds = currentState.notifications.map(
           (item) => item.id
@@ -131,13 +133,10 @@ export default function notificationSlice(set, get) {
           (item) => !availableNotificationIds.includes(item.id)
         );
         return {
-          ...currentState,
-          ...{
-            notifications: currentState.sortNotifications([
-              ...currentState.notifications,
-              ...filteredNotifications,
-            ]),
-          },
+          notifications: currentState.sortNotifications([
+            ...currentState.notifications,
+            ...filteredNotifications,
+          ]),
         };
       },
     },

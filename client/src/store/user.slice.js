@@ -25,7 +25,6 @@ export default function userSlice(set, get) {
     //actions
     isValidUser: (user) => !isEmpty(user),
     setUser: (user) => get().isValidUser(user) && set({ user }),
-    _clearUser: () => set({ user: null }),
     hasRight: (roleName, authRoles, isStrict = true) => {
       // if authRoles undefined or not an array, we put a default list
       let myAllowedRoles = Object.values(ROLES);
@@ -45,24 +44,23 @@ export default function userSlice(set, get) {
       }
       return myAllowedRoles.includes(roleName);
     },
-    _initiateUser: () => null,
+    // partial actions
+    _clearUser: () => set({ user: null }),
+    _isInitialValueAsUser: () => get().user === null,
     // persist options
     _persistUser: {
       partialize: (state) => ({
         user: state.user,
       }),
-      merge: (persistedState, currentState) => {
+      toMerge: (persistedState, currentState) => {
         const { user } = persistedState;
-        const newUser = user
-          ? {
-              ...user,
-              imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
-            }
-          : {};
+        if (!user) {
+          return {};
+        }
         return {
-          ...currentState,
-          ...{
-            user: newUser,
+          user: {
+            ...user,
+            imgSrc: getImgSrcFromRoles(roles, user.imgSrc, user.roleName),
           },
         };
       },

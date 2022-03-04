@@ -9,20 +9,18 @@ export default function tokenSlice(set, get) {
 
     //actions
     setAccessToken: (accessToken) => set({ accessToken }),
+    // partial actions
     _clearAccessToken: () => set({ accessToken: "" }),
-    _initiateAccessToken: () => null,
+    _isInitialValueAsAccessToken: () => get().accessToken === "",
     // persist options
     _persistToken: {
       partialize: (state) => ({
         accessToken: state.accessToken,
       }),
-      merge: (persistedState, currentState) => {
+      toMerge: (persistedState, currentState) => {
         const { accessToken } = persistedState;
         return {
-          ...currentState,
-          ...{
-            accessToken,
-          },
+          accessToken,
         };
       },
     },

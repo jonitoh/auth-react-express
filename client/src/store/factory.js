@@ -1,54 +1,21 @@
 /*
-Global state management in the application.
+Class handling global state management in the application.
 */
 import create from "zustand";
 import shallow from "zustand/shallow";
 import { persist } from "zustand/middleware";
 
-import { isEmpty } from "utils/function";
-
-import themeSlice from "./theme.slice";
-import userSlice from "./user.slice";
-import tokenSlice from "./token.slice";
-import navSlice from "./nav.slice";
-import notificationSlice from "./notification.slice";
+import { isEmpty, getFromNestedObject, capitalize } from "utils/function";
 import persistSlice from "./persist.slice";
 
-/* Find a way to create a factory -- createStore -- */
-const mainSlice = (set, get) => ({
-  ...themeSlice(set, get),
-  ...tokenSlice(set, get),
-  ...userSlice(set, get),
-  ...navSlice(set, get),
-  ...notificationSlice(set, get),
-  ...persistSlice(set, get),
-});
-/* list of imports  map to la function  puis reduce pour etre dans le meme object */
-
-/*interface Storage {
-  getItem: (name: string) => string | null | Promise<string | null>
-  setItem: (name: string, value: string) => void | Promise<void>
-  removeItem: (name: string) => void | Promise<void>
-}*/
-
-const defaultPersistOptions = {
-  name: "",
+// BIG CONSTANTS
+const PERSIST_OPTIONS = {
+  name: "default-local-storage",
   getStorage: () => localStorage,
   serialize: (state) => JSON.stringify(state), //: (state: Object) => string | Promise<string>
   deserialize: (str) => JSON.parse(str), // (str: string) => Object | Promise<Object>
   partialize: (state) => state, // (state: Object) => Object
-  onRehydrateStorage: (state) => {
-    console.log("hydration starts");
-
-    // optional
-    return (state, error) => {
-      if (error) {
-        console.log("an error happened during hydration", error);
-      } else {
-        console.log("hydration finished");
-      }
-    };
-  }, //(state) => () => null, //(state: Object) => ((state?: Object, error?: Error) => void) | void
+  onRehydrateStorage: (state) => null, //(state) => () => null, //(state: Object) => ((state?: Object, error?: Error) => void) | void
   version: 0, // number
   migrate: (persistedState, version) => persistedState, // (persistedState: Object, version: number) => Object | Promise<Object>
   merge: (persistedState, currentState) => ({
@@ -57,93 +24,245 @@ const defaultPersistOptions = {
   }), // (persistedState: Object, currentState: Object) => Object
 };
 
-const persistOptions = {
-  name: "auth__local-storage",
-  partialize: (state) => {
-    //console.log("Par-theme?", state._persistTheme.partialize(state));
-    return {
-      ...state._persistTheme.partialize(state),
-      ...state._persistToken.partialize(state),
-      ...state._persistUser.partialize(state),
-      ...state._persistNotification.partialize(state),
-    };
+const ADVANCED_PERSIST_OPTIONS = [
+  {
+    key: "partialize",
+    format: (s) => `_persist${capitalize(s)}.partialize`,
+    wrapper: (funcs) => (state) =>
+      funcs
+        .map((f) => f(state))
+        .reduce(
+          (previousValue, currentValue) => ({
+            ...previousValue,
+            ...currentValue,
+          }),
+          {}
+        ),
   },
-  merge: (persistedState, currentState) => {
-    if (isEmpty(persistedState)) {
-      console.log("no storage");
-      return { ...currentState, ...persistedState };
-    }
-    console.log("there is a storage");
-    console.log("pers", persistedState);
-    console.log("curr", currentState);
-    console.log("pfff");
-    const c1 = currentState._persistTheme.merge(persistedState, currentState);
-    console.log("1", c1);
-    console.log(
-      "2",
-      currentState._persistToken.merge(persistedState, currentState)
-    );
-    console.log(
-      "3",
-      currentState._persistUser.merge(persistedState, currentState)
-    );
-    console.log(
-      "4",
-      currentState._persistNotification.merge(persistedState, currentState)
-    );
-    const end = {
-      ...currentState._persistTheme.merge(persistedState, currentState),
-      ...currentState._persistToken.merge(persistedState, currentState),
-      ...currentState._persistUser.merge(persistedState, currentState),
-      ...currentState._persistNotification.merge(persistedState, currentState),
-    };
-    console.log("end?", end);
-    return end;
+  {
+    key: "migrate",
+    format: (s) => `_persist${capitalize(s)}.migrate`,
+    wrapper: (funcs) => (persistedState, version) =>
+      funcs
+        .map((f) => f(persistedState, version))
+        .reduce(
+          (previousValue, currentValue) => ({
+            ...previousValue,
+            ...currentValue,
+          }),
+          {}
+        ),
   },
-  onRehydrateStorage: () => (state) => {
-    state.setHasHydrated(true);
+  {
+    key: "merge",
+    format: (s) => `_persist${capitalize(s)}.toMerge`,
+    wrapper: (funcs) => (persistedState, currentState) => {
+      if (isEmpty(persistedState)) {
+        console.log("no storage");
+        return { ...currentState, ...persistedState };
+      }
+      return {
+        ...currentState,
+        ...funcs
+          .map((f) => f(persistedState, currentState))
+          .reduce(
+            (previousValue, currentValue) => ({
+              ...previousValue,
+              ...currentValue,
+            }),
+            {}
+          ),
+      };
+    },
   },
-};
-/* check si il y a une kay _persist et puis du map reduce */
+  {
+    key: "onRehydrateStorage",
+    format: (s) => `_persist${capitalize(s)}.onRehydrateStorage`,
+    wrapper: (state, sliceOrder, keyFormatter) => () =>
+      executeFunctionsFromOrder(state, sliceOrder, keyFormatter, null, null)(),
+  },
+];
 
-const initiate = (store) => {
-  console.log("start big initialisation");
-  store.getState()._initiateNotifications();
-  store.getState()._initiateTheme();
-  store.getState()._initiateAccessToken();
-  store.getState()._initiateUser();
+const createMainSlice = function (slices) {
+  return (set, get) =>
+    slices
+      .map((slice) => slice(set, get))
+      .reduce(
+        (previousValue, currentValue) => ({
+          ...previousValue,
+          ...currentValue,
+        }),
+        {}
+      );
 };
-/* check si il y a une kay _initiate et puis du map reduce */
 
-const clear = (store) => {
-  console.log("start big cleansing");
-  store.getState()._clearNotifications();
-  store.getState()._clearTheme();
-  store.getState()._clearAccessToken();
-  store.getState()._clearUser();
-  store.persist?.clearStorage();
+const extractAuxiliaryFunctions = function (arg) {
+  let first;
+  let last;
+
+  if (arg instanceof Function) {
+    last = arg;
+  }
+
+  if (arg && arg.length && arg.length === 2) {
+    first = arg[0];
+    last = arg[1];
+  }
+
+  if ("first" in arg || "last" in arg) {
+    first = arg.first;
+    last = arg.last;
+  }
+  return [first, last];
 };
-/* check si il y a une kay _clear et puis du map reduce */
 
-const wrapSlice = function (
-  slice,
-  persistOptions = {},
-  initiate = (store) => null,
-  clear = (store) => null
+const getFunctionsFromState = function (state, sliceOrder, keyFormatter) {
+  // create list of functions
+  return sliceOrder
+    .map((key) => getFromNestedObject(state, keyFormatter(key)))
+    .map((l) => (l.length > 0 ? l[0] : undefined))
+    .filter((f) => f instanceof Function);
+};
+
+const executeFunctionsFromOrder = function (
+  globalStore,
+  state,
+  sliceOrder,
+  keyFormatter,
+  firstFunction,
+  lastFunction
 ) {
-  const store = isEmpty(persistOptions)
-    ? create(slice)
-    : create(persist(slice, persistOptions));
-  return {
-    use: store,
-    fromSelector: (selector) => store(selector, shallow),
-    initiate: () => initiate(store),
-    clear: () => clear(store),
+  // create list of functions
+  const functions = getFunctionsFromState(state, sliceOrder, keyFormatter);
+
+  return (args) => {
+    // execute list of function
+    if (firstFunction instanceof Function) {
+      firstFunction({ ...args, state, globalStore });
+    }
+    for (let index = 0; index < functions.length; index++) {
+      functions[index]();
+    }
+    if (lastFunction instanceof Function) {
+      lastFunction({ ...args, state, globalStore });
+    }
   };
 };
 
-const createStore = (slices, debugMode = false) => {
-  const store = ((slices) => slices)(slices);
-  return wrapSlice(store);
-};
-export default wrapSlice(mainSlice, persistOptions, initiate, clear);
+export default class GlobalStore {
+  constructor({
+    slices,
+    sliceOrder,
+    debugMode = true,
+    persistOptions = {},
+    createPersistOptions = false,
+    initiate = (store, hydrate) => null,
+    clear = (store) => null,
+  }) {
+    // check if we must use the middleware persist
+    const isPersisting = !isEmpty(persistOptions) || createPersistOptions;
+    this.isPersisting = isPersisting;
+
+    // create globalSlice;
+    if (isPersisting) {
+      slices = slices.concat([persistSlice]);
+      sliceOrder = sliceOrder.concat(["persist"]);
+    }
+    const globalSlice = createMainSlice(slices);
+
+    // create store;
+    const store = isPersisting
+      ? create(persist(globalSlice, {}))
+      : create(globalSlice);
+
+    const state = store.getState();
+    //console.log("@@@@@state", state);
+
+    console.log("@@@@@ global initial");
+    // create _globalInitiate //initiate: ({rehydrate}) => initiate({store, rehydrate})
+    const initiateKeyFormatter = (key) => `_initiate${capitalize(key)}`;
+    const [initiateFirstFunction, initiateLastFunction] =
+      extractAuxiliaryFunctions(initiate);
+    this._globalInitiate = executeFunctionsFromOrder(
+      this,
+      state,
+      sliceOrder,
+      initiateKeyFormatter,
+      initiateFirstFunction,
+      initiateLastFunction
+    );
+    //console.log("@@@@@this._globalInitiate", this._globalInitiate);
+
+    console.log("@@@@@ global clear");
+    // create _globalClear //clear: () => clear({store})
+    const clearKeyFormatter = (key) => `_clear${capitalize(key)}`;
+    const [clearFirstFunction, clearLastFunction] =
+      extractAuxiliaryFunctions(clear);
+    this._globalClear = executeFunctionsFromOrder(
+      this,
+      state,
+      sliceOrder,
+      clearKeyFormatter,
+      clearFirstFunction,
+      clearLastFunction
+    );
+    //console.log("@@@@@this._globalClear", this._globalClear);
+
+    console.log("@@@@@ global isinitialvalue fake");
+    // create method linked to persisting functionalities
+    let isInitialValue = () => false;
+    if (isPersisting) {
+      // create isInitialValue _isInitialValueAs
+      const isInitialValueKeyFormatter = (key) =>
+        `_isInitialValueAs${capitalize(key)}`;
+      console.log("@@@@@ ++ global isinitialvalue fake");
+      isInitialValue = executeFunctionsFromOrder(
+        this,
+        state,
+        sliceOrder,
+        isInitialValueKeyFormatter,
+        null,
+        null
+      );
+
+      // create the advancedPersistOptions
+      let advancedPersistOptions = {};
+      if (createPersistOptions) {
+        for (let index = 0; index < ADVANCED_PERSIST_OPTIONS.length; index++) {
+          const { key, format, wrapper } = ADVANCED_PERSIST_OPTIONS[index];
+          let func = undefined;
+          if (key === "onRehydrateStorage") {
+            func = wrapper(state, sliceOrder, format);
+          } else {
+            const funcs = getFunctionsFromState(state, sliceOrder, format);
+            func = wrapper(funcs);
+          }
+
+          advancedPersistOptions[key] = func;
+        }
+      }
+      store.persist.setOptions({
+        ...PERSIST_OPTIONS,
+        ...advancedPersistOptions,
+        ...persistOptions,
+      });
+    }
+
+    this.isInitialValue = isInitialValue;
+    //console.log("@@@@@this.isInitialValue", this.isInitialValue);
+    this.use = store;
+    //console.log("@@@@@this.use", this.use);
+  }
+
+  initiate(rehydrate) {
+    this._globalInitiate({ rehydrate });
+  }
+
+  clear() {
+    this._globalClear();
+  }
+
+  fromSelector(selector) {
+    return this.use(selector, shallow);
+  }
+}

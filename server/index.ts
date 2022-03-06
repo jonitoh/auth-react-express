@@ -1,4 +1,4 @@
 // Configuration better for testing purpose
-const { startServer } = require("./start");
+import  { startServer } from "./start";
 
 startServer();

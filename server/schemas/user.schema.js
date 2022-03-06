@@ -1,5 +1,9 @@
 const { Schema } = require("mongoose");
-const { BaseSchemaClass, capitalize, handleErrorForLog } = require("../utils");
+const {
+  BaseSchemaClass,
+  capitalize,
+  handleErrorForLog,
+} = require("../utils/main");
 const bcrypt = require("bcrypt");
 
 const userSchema = new Schema(

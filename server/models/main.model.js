@@ -7,7 +7,7 @@ const {
   formatDate,
   CustomError,
   handleErrorForLog,
-} = require("./../utils");
+} = require("../utils/main");
 const path = require("path");
 const fs = require("fs");
 

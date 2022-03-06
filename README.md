@@ -221,6 +221,8 @@ back end
 
 - [express clean code] (https://www.codepedia.org/ama/cleaner-code-in-expressjs-rest-api-with-custom-error-handling)
 
+- [nested value object] (https://dev.to/rajnishkatharotiya/select-a-nested-value-from-the-object-in-javascript-2fjd)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

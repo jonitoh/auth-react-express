@@ -5,9 +5,13 @@
   "description": "server side",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint . --ignore-path .eslintignore --ext .js,.ts",
+    "lint:fix": "eslint . --ignore-path .eslintignore --ext .js,.ts --fix",
+    "format:prettier": "prettier --config .prettierrc 'server/**/*.ts' --write",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "NODE_ENV=development nodemon -r dotenv/config index.js dotenv_config_path=../.env dotenv_config_debug=true",
-    "start": "node -r dotenv/config index.js dotenv_config_path=../.env dotenv_config_debug=true"
+    "dev": "NODE_ENV=development ts-node -r dotenv/config index.ts dotenv_config_path=../.env dotenv_config_debug=true",
+    "start:prod": "npm run build && node -r dotenv/config ./dist/server/index.js dotenv_config_path=../.env dotenv_config_debug=true",
+    "build": "npx tsc"
   },
   "author": "TOH Ninsemou Jordan",
   "license": "MIT",
@@ -19,7 +23,27 @@
     "express": "^4.17.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.0",
-    "nodemon": "^2.0.15",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/mongoose": "^5.11.97",
+    "@types/node": "^17.0.21",
+    "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^5.13.0",
+    "@typescript-eslint/parser": "^5.13.0",
+    "eslint": "^8.10.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^16.1.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.5.1",
+    "ts-node": "^10.6.0",
+    "typescript": "^4.6.2"
   }
 }

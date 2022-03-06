@@ -2,8 +2,8 @@ const express = require("express"); // Import express framework
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const { getRoutes } = require("./routes");
-const { resolveInput } = require("./utils");
-const { verifyCredentials, handleLogAndError } = require("./middlewares");
+const { resolveInput } = require("./utils/main");
+const { verifyCredentials, handleLog, handleError } = require("./middlewares");
 
 // thx https://github.com/kentcdodds/express-app-example
 const setupCloseOnExit = (server) => {
@@ -42,7 +42,7 @@ const startServer = async (port = process.env.PORT || 4000) => {
 
   // Implement middleware;
   // custom logs
-  app.use(handleLogAndError.logHandler);
+  app.use(handleLog.logHandler);
 
   // credentials
   app.use(verifyCredentials.checkHeader);
@@ -145,8 +145,10 @@ const startServer = async (port = process.env.PORT || 4000) => {
     });
   }
 
-  // error Handler
-  app.use(handleLogAndError.errorHandler);
+  // error Handlers
+  // -- log into a file the errors
+  app.use(handleLog.errorHandler);
+  // handleError
 
   return new Promise((resolve) => {
     const server = app.listen(port, () => {

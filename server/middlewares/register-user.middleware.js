@@ -1,5 +1,5 @@
 const { Role, User, ProductKey } = require("../models");
-const { handleMessageForResponse } = require("../utils");
+const { handleMessageForResponse } = require("../utils/main");
 
 checkDuplicateWithUsernameOrEmail = async (req, res, next) => {
   const { email, username } = req.body;

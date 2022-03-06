@@ -5,7 +5,7 @@ const {
   verifyAccessToken,
   verifyRefreshToken,
 } = require("../config/jwt.config");
-const { handleMessageForResponse } = require("../utils.js");
+const { handleMessageForResponse } = require("../utils/main.js");
 
 const handleTokenErrorForResponse = (err, res) => {
   if (err instanceof TokenExpiredError) {

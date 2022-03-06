@@ -1,6 +1,7 @@
 # root
 .DS_Store
 node_modules
+.vscode
 
 # client side
 client/node_modules

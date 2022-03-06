@@ -1,5 +1,5 @@
 const { ProductKey } = require("../models");
-const { handleMessageForResponse } = require("../utils");
+const { handleMessageForResponse } = require("../utils/main");
 
 checkDuplicateProductKey = (req, res, next) => {
   try {

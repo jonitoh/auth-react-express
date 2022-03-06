@@ -1,6 +1,6 @@
 const { Schema } = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
-const { BaseSchemaClass, handleErrorForLog } = require("../utils");
+const { BaseSchemaClass, handleErrorForLog } = require("../utils/main");
 
 const randomProductKey = () => uuidv4();
 

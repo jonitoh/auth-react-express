@@ -1,5 +1,5 @@
 const { Role } = require("../models");
-const { handleMessageForResponse } = require("../utils.js");
+const { handleMessageForResponse } = require("../utils/main.js");
 
 const hasRole = (roleName, include = true) => {
   const middleware = async (req, res, next) => {

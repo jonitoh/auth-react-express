@@ -1,5 +1,5 @@
 const { Schema } = require("mongoose");
-const { BaseSchemaClass, handleErrorForLog } = require("../utils");
+const { BaseSchemaClass, handleErrorForLog } = require("../utils/main");
 
 const roleSchema = new Schema(
   {

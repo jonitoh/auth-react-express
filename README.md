@@ -223,6 +223,10 @@ back end
 
 - [nested value object] (https://dev.to/rajnishkatharotiya/select-a-nested-value-from-the-object-in-javascript-2fjd)
 
+- [mongoose with typescript 1](https://www.dailydeveloping.com/posts/Use-mongoose-with-typescript)
+- [mongoose with typescript 2](https://medium.com/swlh/using-typescript-with-mongodb-393caf7adfef)
+- [mongoose with typescript 3](https://medium.com/weekly-webtips/make-typescript-and-mongoose-play-nicely-together-3d3c94a91e34)
+
 <!-- back to the top -->
 <p align="right">
  <a href="#top">

@@ -1,10 +1,10 @@
-import { SchemaDefinition, SchemaDefinitionType, SchemaOptions } from "mongoose";
-import { BaseSchemaClass, generateCompleteSchema } from "utils/model";
-import { IRoleDocument, IRoleModel } from "./role.types";
+import { SchemaDefinition, SchemaDefinitionType, SchemaOptions } from 'mongoose';
+import { BaseSchemaClass, generateCompleteSchema } from 'utils/model';
+import { IRoleDocument, IRoleModel } from './role.types';
 
-import statics from "./role.statics";
-import methods from "./role.methods";
-import virtuals from "./role.virtuals";
+import statics from './role.statics';
+import methods from './role.methods';
+import virtuals from './role.virtuals';
 
 const roleDefinition: SchemaDefinition<SchemaDefinitionType<IRoleDocument>> = {
   name: {
@@ -54,9 +54,10 @@ const roleDefinition: SchemaDefinition<SchemaDefinitionType<IRoleDocument>> = {
   },
 };
 
-const roleOptions: SchemaOptions = { collection: "role",
-  toObject: {virtuals: true},
-  toJSON: {virtuals: true },
+const roleOptions: SchemaOptions = {
+  collection: 'role',
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true },
 };
 
 const roleSchema = generateCompleteSchema<IRoleDocument, IRoleModel>(
@@ -65,6 +66,7 @@ const roleSchema = generateCompleteSchema<IRoleDocument, IRoleModel>(
   statics,
   methods,
   virtuals,
-  BaseSchemaClass);
+  BaseSchemaClass
+);
 
 export default roleSchema;

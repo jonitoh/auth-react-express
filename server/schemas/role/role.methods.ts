@@ -1,4 +1,4 @@
-import { IRoleDocument, ObjectOfFunctions } from "./role.types";
+import { IRoleDocument, ObjectOfFunctions } from './role.types';
 
 function higherThan(this: IRoleDocument, number: number): boolean {
   return this.level >= number;
@@ -6,6 +6,6 @@ function higherThan(this: IRoleDocument, number: number): boolean {
 
 const methods: ObjectOfFunctions = {
   higherThan,
-}
+};
 
-export default methods
+export default methods;

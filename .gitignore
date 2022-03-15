@@ -5,8 +5,13 @@ node_modules
 
 # client side
 client/node_modules
+client/dist
+client/temp
+client/logs
+client/data
 
 # server side
+server/dist
 server/node_modules
 server/temp
 server/logs

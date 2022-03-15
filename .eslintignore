@@ -1,0 +1,13 @@
+# src
+node_modules
+dist
+build
+.vscode
+docs
+# server
+# server/node_modules
+# server/dist
+# server/temp
+# server/data
+# client
+

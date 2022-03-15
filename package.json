@@ -24,5 +24,8 @@
   "homepage": "https://github.com/jonitoh/auth-react-express#readme",
   "dependencies": {
     "concurrently": "^7.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.2"
   }
 }

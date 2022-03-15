@@ -1,4 +1,4 @@
 // Configuration better for testing purpose
-import  { startServer } from "./start";
+import { startServer } from './start';
 
-startServer();
+startServer().catch((reason) => console.error('Error when starting the server', reason));

@@ -15,7 +15,7 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
-    "project": "server/tsconfig.json"
+    "project": "tsconfig.json"
   },
   "settings": {
     "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
@@ -52,25 +52,25 @@
     ],
     "no-underscore-dangle": "off",
     "arrow-body-style": ["error", "as-needed"],
-    "default-param-last": ["error"],
+    "default-param-last": ["warn"],
     // https://basarat.gitbooks.io/typescript/docs/tips/defaultIsBad.html
     "import/prefer-default-export": "off",
-    "import/no-default-export": "error",
+    "import/no-default-export": "off",
     // Use function hoisting to improve code readability
-    "no-use-before-define": ["error", { "functions": false, "classes": true, "variables": true }],
+    "no-use-before-define": "off",
     // Allow most functions to rely on type inference. If the function is exported, then `@typescript-eslint/explicit-module-boundary-types` will ensure it's typed.
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-use-before-define": [
-      "error",
+      "warn",
       { "functions": false, "classes": true, "variables": true, "typedefs": true }
     ],
-    "@typescript-eslint/explicit-member-accessibility": ["error"],
+    "@typescript-eslint/explicit-member-accessibility": ["warn"],
     "@typescript-eslint/member-ordering": [
-      "error",
+      "warn",
       { "default": ["signature", "method", "constructor", "field"] }
     ],
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/no-non-null-assertion": "error",
     "require-await": "off",
     "@typescript-eslint/require-await": "error",
@@ -87,49 +87,52 @@
     "camelcase": "off",
     "@typescript-eslint/naming-convention": [
       "warn",
-      [
-        // Enforce the codebase follows ESLint's camelcase conventions
-        {
-          "selector": "default",
-          "format": ["camelCase"]
-        },
+      // Enforce the codebase follows ESLint's camelcase conventions
+      {
+        "selector": "default",
+        "format": ["camelCase", "UPPER_CASE"]
+      },
 
-        {
-          "selector": "variable",
-          "format": ["camelCase", "UPPER_CASE"]
-        },
-        {
-          "selector": "parameter",
-          "format": ["camelCase"],
-          "leadingUnderscore": "allow"
-        },
+      {
+        "selector": "variable",
+        "format": ["camelCase", "UPPER_CASE"]
+      },
+      {
+        "selector": "parameter",
+        "format": ["camelCase"],
+        "leadingUnderscore": "allow"
+      },
 
-        {
-          "selector": "memberLike",
-          "modifiers": ["private"],
-          "format": ["camelCase"],
-          "leadingUnderscore": "require"
-        },
+      {
+        "selector": "memberLike",
+        "modifiers": ["private"],
+        "format": ["camelCase"],
+        "leadingUnderscore": "require"
+      },
 
-        {
-          "selector": "typeLike",
-          "format": ["PascalCase"]
-        },
-        // Enforce that private members are prefixed with an underscore
-        {
-          "selector": "memberLike",
-          "modifiers": ["private"],
-          "format": ["camelCase"],
-          "leadingUnderscore": "require"
-        },
-        // Enforce that boolean variables are prefixed with an allowed verb
-        {
-          "selector": ["variable", "parameter"],
-          "types": ["boolean"],
-          "format": ["PascalCase"],
-          "prefix": ["is", "should", "has", "can", "did", "will"]
-        }
-      ]
-    ]
+      {
+        "selector": "typeLike",
+        "format": ["PascalCase"]
+      },
+      // Enforce that private members are prefixed with an underscore
+      {
+        "selector": "memberLike",
+        "modifiers": ["private"],
+        "format": ["camelCase"],
+        "leadingUnderscore": "require"
+      },
+      // Enforce that boolean variables are prefixed with an allowed verb
+      {
+        "selector": ["variable", "parameter"],
+        "types": ["boolean"],
+        "format": ["PascalCase"],
+        "prefix": ["is", "should", "has", "can", "did", "will", "must"]
+      }
+    ],
+    "@typescript-eslint/no-unsafe-argument": "warn",
+    "@typescript-eslint/no-unsafe-assignment": "warn",
+    "@typescript-eslint/no-unsafe-call": "warn",
+    "@typescript-eslint/no-unsafe-member-access": "warn",
+    "@typescript-eslint/no-unsafe-return": "warn"
   }
 }

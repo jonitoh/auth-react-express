@@ -7,10 +7,10 @@
   "scripts": {
     "lint": "eslint . --ignore-path .eslintignore --ext .js,.ts",
     "lint:fix": "eslint . --ignore-path .eslintignore --ext .js,.ts --fix",
-    "format:prettier": "prettier --config .prettierrc 'server/**/*.ts' --write",
+    "format:prettier": "prettier --config '../.prettierrc.json' '../**/*.ts' --write",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=development ts-node -r dotenv/config index.ts dotenv_config_path=../.env dotenv_config_debug=true",
-    "start:prod": "npm run build && node -r dotenv/config ./dist/server/index.js dotenv_config_path=../.env dotenv_config_debug=true",
+    "start:prod": "npm run build && node -r dotenv/config ./dist/index.js dotenv_config_path=../.env dotenv_config_debug=true",
     "build": "npx tsc"
   },
   "author": "TOH Ninsemou Jordan",

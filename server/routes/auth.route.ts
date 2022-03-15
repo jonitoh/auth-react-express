@@ -1,7 +1,6 @@
-import { Router } from "express";
-import middlewares from "middlewares";
-import controller from  "controllers/auth.controller";
-
+import { Router } from 'express';
+import middlewares from 'middlewares';
+import controller from 'controllers/auth.controller';
 
 const { registerUser } = middlewares;
 
@@ -11,7 +10,7 @@ function getRouter(): Router {
 
   // Sign Up
   router.post(
-    "/register",
+    '/register',
     [
       registerUser.checkDuplicateWithUsernameOrEmail,
       registerUser.checkProductKeyStored,
@@ -21,18 +20,18 @@ function getRouter(): Router {
   );
 
   // Sign In with Email and Password
-  router.post("/sign-in/credentials", controller.signInWithEmail);
+  router.post('/sign-in/credentials', controller.signInWithEmail);
 
   // Sign In with Product Key
-  router.post("/sign-in/product-key", controller.signInWithProductKey);
+  router.post('/sign-in/product-key', controller.signInWithProductKey);
 
   // Refresh token
-  router.get("/refresh-token", controller.refreshToken);
+  router.get('/refresh-token', controller.refreshToken);
 
   // Sign Out by clearing our tokens stored in cookies
-  router.get("/sign-out", controller.signOut);
+  router.get('/sign-out', controller.signOut);
 
   return router;
-};
+}
 
 export { getRouter };

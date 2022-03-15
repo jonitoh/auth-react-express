@@ -1,23 +1,19 @@
-import mongoose, { Connection, ObjectId } from "mongoose";
-import path from "path";
-import fs from "fs";
-import dbConfig from "config/db.config";
-import {
-  resolveInput,
-  randomNumber,
-  randomDate,
-  resolvePath,
-  formatDate,
-} from "utils/main";
-import { IGenericModel } from "utils/model";
-import roleSchema from "schemas/role/role.schema";
-import { IRoleDocument, IRoleModel } from "schemas/role/role.types";
-import userSchema from "schemas/user/user.schema";
-import { IUserDocument, IUserModel } from "schemas/user/user.types";
-import productKeySchema from "schemas/product-key/product-key.schema";
-import { IProductKeyDocument, IProductKeyModel } from "schemas/product-key/product-key.types";
+/* eslint-disable no-await-in-loop */
+import mongoose, { Connection, ObjectId } from 'mongoose';
+import path from 'path';
+import fs from 'fs';
+import dbConfig from 'config/db.config';
+import { resolveInput, randomNumber, randomDate, resolvePath, formatDate } from 'utils/main';
+import { IGenericModel } from 'utils/model';
+import roleSchema from 'schemas/role/role.schema';
+import { IRoleDocument, IRoleModel } from 'schemas/role/role.types';
+import userSchema from 'schemas/user/user.schema';
+import { IUserDocument, IUserModel } from 'schemas/user/user.types';
+import productKeySchema from 'schemas/product-key/product-key.schema';
+import { IProductKeyDocument, IProductKeyModel } from 'schemas/product-key/product-key.types';
 
-import { 
+import { ArrayHTTPError } from 'utils/error/array-http-error';
+import {
   CheckProductKeyType,
   IDatabaseConnectionHelper,
   InitDatabaseWithRawMethodOptions,
@@ -43,49 +39,48 @@ import {
   DumpDatabaseOptions,
   AddSuperAdminUserOptions,
   DatabaseConnectionType,
-} from "./types"
-
-import { ArrayHTTPError } from "utils/error"
-
+} from './types';
 
 function getDatabaseConnection(): DatabaseConnectionType {
-
   // create connection
   const connection: Connection = mongoose.createConnection(dbConfig.URI, {
-    //useFindAndModify: true,
+    // useFindAndModify: true,
     family: 4, // Use IPv4, skip trying IPv6
     maxPoolSize: 5,
   });
-  console.info("main model -- readyState", connection.readyState);
+  console.info('main model -- readyState', connection.readyState);
 
   // add listeners to the connection
-  connection.on("open", () => {
-    console.log("Database opened");
+  connection.on('open', () => {
+    console.info('Database opened');
   });
 
-  connection.on("close", () => {
-    console.log("Database closed");
+  connection.on('close', () => {
+    console.info('Database closed');
   });
-  
+
   // create models
   const User: IUserModel = connection.model<IUserDocument, IUserModel>('user', userSchema);
-  const ProductKey: IProductKeyModel = connection.model<IProductKeyDocument, IProductKeyModel>('productkey', productKeySchema);
+  const ProductKey: IProductKeyModel = connection.model<IProductKeyDocument, IProductKeyModel>(
+    'productkey',
+    productKeySchema
+  );
   const Role: IRoleModel = connection.model<IRoleDocument, IRoleModel>('role', roleSchema);
 
   // create helper function based on models
-  const checkProductKey = async (productKey:string|undefined): Promise<CheckProductKeyType> => {
+  const checkProductKey = async (productKey: string | undefined): Promise<CheckProductKeyType> => {
     // init variables
-    let isKeyInvalid: boolean = false;
-    let isStored: boolean = false;
-    let storedProductKey: IProductKeyDocument|null = null;
-    let isInUse: boolean = true;
-    let isInUseMsg: string|null = null;
-    let isLinkedToUser: boolean = false;
-    let linkedUser: IUserDocument|null = null;
-    let error = new ArrayHTTPError();
+    let isKeyInvalid = false;
+    let isStored = false;
+    let storedProductKey: IProductKeyDocument | null = null;
+    let isInUse = true;
+    let isInUseMsg: string | null = null;
+    const isLinkedToUser = false;
+    let linkedUser: IUserDocument | null = null;
+    const error = new ArrayHTTPError();
 
     try {
-      // is productKey already stored ? 
+      // is productKey already stored ?
       const ifStoredProductKey = await ProductKey.checkIfStored(productKey);
       isStored = ifStoredProductKey.isStored;
       storedProductKey = ifStoredProductKey.storedProductKey as IProductKeyDocument;
@@ -99,10 +94,10 @@ function getDatabaseConnection(): DatabaseConnectionType {
         // check if the productKey is used by a user
         linkedUser = await User.findOne({ productKey: storedProductKey._id });
       }
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       error.add(err);
     }
-    
+
     return {
       isKeyInvalid,
       isStored,
@@ -111,7 +106,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
       isInUseMsg,
       isLinkedToUser,
       linkedUser,
-      error: error.message,
+      error: error.fullMessage,
     };
   };
 
@@ -123,68 +118,74 @@ function getDatabaseConnection(): DatabaseConnectionType {
   function formatRolesFromJson(data: Array<RoleAsJson>): Array<RequiredRoleAsJson> {
     // role should look like this [{ name: ... }, ..., { name: ..., isDefault: true }]
     // check for default role
-    let defaultRole: RoleAsJson | undefined = data.find(({isDefault}):boolean => isDefault === true);
+    // eslint-disable-next-line max-len
+    const defaultRole: RoleAsJson | undefined = data.find(
+      ({ isDefault }): boolean => isDefault === true
+    );
     if (!defaultRole) {
-      throw new Error("No default role found.");
-    } 
+      throw new Error('No default role found.');
+    }
     // set default role name
     Role.defaultRoleName = defaultRole.name;
 
-    return data.map(({ name, isDefault }): RequiredRoleAsJson => ({
-      name: name,
-      isDefault: !!isDefault,
-    }));
-  };
+    return data.map(
+      ({ name, isDefault }): RequiredRoleAsJson => ({
+        name,
+        isDefault: !!isDefault,
+      })
+    );
+  }
 
-  async function formatUsersFromJson(data: Array<UserAsJson>, coerceRole:boolean): Promise<Array<RequiredUserAsJson>> {    
+  // eslint-disable-next-line max-len
+  async function formatUsersFromJson(
+    data: Array<UserAsJson>,
+    mustCoerceRole: boolean
+  ): Promise<Array<RequiredUserAsJson>> {
     // helpers
-    async function mapToProductKeyId(key: string): Promise<ObjectId|undefined> {
-      const pk = await ProductKey.findOne({ key }).select("_id").lean() as IProductKeyDocument & { _id: any; } | null;
+    async function mapToProductKeyId(key: string): Promise<ObjectId | undefined> {
+      const pk = await ProductKey.findOne({ key }).select('_id').lean();
       if (pk) {
         return pk._id as ObjectId;
       }
       return undefined;
-    };
+    }
 
-    async function mapToRoleId(name: string): Promise<ObjectId|undefined> {
-      const role = await Role.findOne({ name }).select("_id").lean() as IRoleDocument & { _id: any; } | null;
+    async function mapToRoleId(name: string): Promise<ObjectId | undefined> {
+      const role = await Role.findOne({ name }).select('_id').lean();
       if (role) {
         return role._id as ObjectId;
       }
       return undefined;
-    };
+    }
 
     const formattedData: Array<RequiredUserAsJson> = [];
 
-    for (let index = 0; index < data.length; index++) {
-      
+    for (let index = 0; index < data.length; index += 1) {
       // console.info("--------index", index);
       const { productKey, role, password } = data[index];
 
-      //console.info("productKey", productKey);
-      //console.info("role", role);
-      const formattedProductKey: ObjectId|undefined = await mapToProductKeyId(productKey);
-      let formattedRole: ObjectId|undefined = await mapToRoleId(role);
+      // console.info("productKey", productKey);
+      // console.info("role", role);
+      const formattedProductKey: ObjectId | undefined = await mapToProductKeyId(productKey);
+      let formattedRole: ObjectId | undefined = await mapToRoleId(role);
 
-      //console.info("formattedProductKey", formattedProductKey);
-      //console.info("formattedRole", formattedRole);
+      // console.info("formattedProductKey", formattedProductKey);
+      // console.info("formattedRole", formattedRole);
 
-      const hasInconsistentProductKey: boolean = !formattedProductKey;
-      let hasInconsistentRole: boolean = !formattedRole;
+      const hasInconsistentProductKey = !formattedProductKey;
+      let hasInconsistentRole = !formattedRole;
 
       // handle inconsistency
       if (hasInconsistentProductKey) {
-        console.warn("inconsistency on the product key.");
+        console.warn('inconsistency on the product key.');
       }
       if (hasInconsistentRole) {
-        if (coerceRole) {
+        if (mustCoerceRole) {
           formattedRole = Role.defaultRole._id as ObjectId;
           hasInconsistentRole = false;
-          console.warn(
-            "inconsistency on the role being corrected with the default value."
-          );
+          console.warn('inconsistency on the role being corrected with the default value.');
         } else {
-          console.warn("inconsistency on the role.");
+          console.warn('inconsistency on the role.');
         }
       }
 
@@ -198,92 +199,94 @@ function getDatabaseConnection(): DatabaseConnectionType {
         } as RequiredUserAsJson);
       }
     }
-    console.info(
-      `${data.length - formattedData.length} users removed from inconsitency`
-    );
+    console.info(`${data.length - formattedData.length} users removed from inconsitency`);
     return formattedData;
-  };
+  }
 
   function formatRolesFromRandom({
     roles,
     defaultRoleName,
   }: FormatRolesFromRandomOptions): Array<RequiredRoleAsRandom> {
     // import roles
-    const data = roles.map((role:RoleAsRandom):RequiredRoleAsRandom => ({
-      ...role,
-      isDefault: role.name === defaultRoleName,
-    }));
+    const data = roles.map(
+      (role: RoleAsRandom): RequiredRoleAsRandom => ({
+        ...role,
+        isDefault: role.name === defaultRoleName,
+      })
+    );
 
     // set default role name
     Role.defaultRoleName = defaultRoleName;
 
     return data;
-  };
+  }
 
   function formatProductKeysFromRandom({
     productKeys = [],
     numberOfProductKeys = 10,
   }: FormatProductKeysFromRandomOptions): [Array<RequiredProductKeyAsRandom>, Array<string>] {
     // create product keys
-    const data: Array<string> =
+    const data =
       productKeys.length > 0
         ? productKeys
-        : Array.from(Array(numberOfProductKeys), () =>
-            ProductKey.generateKey()
-          );
+        : Array.from(Array(numberOfProductKeys), () => ProductKey.generateKey());
 
     // create pseudo-documents
-    const formattedData = data.map((key:string) => ({
+    const formattedData = data.map((key: string) => ({
       key,
       activationDate: randomDate(new Date(2022, 1, 1), new Date()),
       activated: Math.random() > 0.5,
-      validityPeriod: randomNumber(1, 100) * 60, //in seconds
+      validityPeriod: randomNumber(1, 100) * 60, // in seconds
     }));
     return [formattedData, data];
-  };
+  }
 
   function formatUsersFromRandom(
     roles: Array<RoleAsRandom>,
     productKeys: Array<string>,
-    { numberOfKeysUnused = 2 }: FormatUsersFromRandomOptions): Array<RequiredUserAsRandom> {
+    { numberOfKeysUnused = 2 }: FormatUsersFromRandomOptions
+  ): Array<RequiredUserAsRandom> {
     if (numberOfKeysUnused < productKeys.length) {
-      for (let i = 0; i < numberOfKeysUnused; i++) {
-        const index = randomNumber(0, productKeys.length);
+      for (let i = 0; i < numberOfKeysUnused; i += 1) {
+        const index: number = randomNumber(0, productKeys.length);
         productKeys.splice(index, 1);
       }
     }
 
     // create pseudo-documents
-    const formattedData = productKeys.map((key: string, idx: number): RequiredUserAsRandom => ({
-      username: `user ${idx}`,
-      email: `user${idx}@test.com`,
-      password: `passwordOfUser${idx}`,
-      productKey: key,
-      role: roles[randomNumber(0, roles.length - 1)].name,
-    }));
+    const formattedData = productKeys.map(
+      (key: string, idx: number): RequiredUserAsRandom => ({
+        username: `user ${idx}`,
+        email: `user${idx}@test.com`,
+        password: `passwordOfUser${idx}`,
+        productKey: key,
+        role: roles[randomNumber(0, roles.length - 1)].name,
+      })
+    );
     return formattedData;
-  };
+  }
 
   async function initDatabaseWithRawMethod({
-      roleInput,
-      productKeyInput,
-      userInput,
-    }: InitDatabaseWithRawMethodOptions
-  ): Promise<void> {
+    roleInput,
+    productKeyInput,
+    userInput,
+  }: InitDatabaseWithRawMethodOptions): Promise<void> {
     // prepare data to insert
     const resolvedData: RawMethodResolvedData = {
-      roles: resolveInput(roleInput) as RawMethodResolvedData["roles"],
-      productKeys: resolveInput(productKeyInput) as RawMethodResolvedData["productKeys"],
-      users: resolveInput(userInput) as RawMethodResolvedData["users"],
+      roles: resolveInput(roleInput) as RawMethodResolvedData['roles'],
+      productKeys: resolveInput(productKeyInput) as RawMethodResolvedData['productKeys'],
+      users: resolveInput(userInput) as RawMethodResolvedData['users'],
     };
 
     try {
-      console.info("insertion in the database");
-      const roles = await Role.insertFromData(resolvedData.roles) as Array<IRoleDocument>;
+      console.info('insertion in the database');
+      const roles = (await Role.insertFromData(resolvedData.roles)) as Array<IRoleDocument>;
       await Role.updateDefaultValues();
-      const productKeys = await ProductKey.insertFromData(resolvedData.productKeys) as Array<IProductKeyDocument>;
-      const users = await User.insertFromData(resolvedData.users) as Array<IUserDocument>;
-      console.info("number of inserted documents", {
+      const productKeys = (await ProductKey.insertFromData(
+        resolvedData.productKeys
+      )) as Array<IProductKeyDocument>;
+      const users = (await User.insertFromData(resolvedData.users)) as Array<IUserDocument>;
+      console.info('number of inserted documents', {
         roles: roles?.length ? roles.length : 0,
         productKeys: productKeys?.length ? productKeys.length : 0,
         users: users?.length ? users.length : 0,
@@ -292,130 +295,130 @@ function getDatabaseConnection(): DatabaseConnectionType {
       console.error(`error during the ingestion phase:\n`);
       throw error;
     }
-    console.info("initDatabase -- end");
-  };
+    console.info('initDatabase -- end');
+  }
 
   async function initDatabaseWithJsonMethod({
-      roleInput,
-      productKeyInput,
-      userInput,
-      coerceRole = true, //false,
-    }: InitDatabaseWithJsonMethodOptions
-  ): Promise<void> {
+    roleInput,
+    productKeyInput,
+    userInput,
+    mustCoerceRole = true, // false,
+  }: InitDatabaseWithJsonMethodOptions): Promise<void> {
     // prepare data to insert
 
     const resolvedData: JsonMethodResolvedData = {
-      roles: resolveInput(roleInput) as JsonMethodResolvedData["roles"],
-      productKeys: resolveInput(productKeyInput) as JsonMethodResolvedData["productKeys"],
-      users: resolveInput(userInput) as JsonMethodResolvedData["users"],
+      roles: resolveInput(roleInput) as JsonMethodResolvedData['roles'],
+      productKeys: resolveInput(productKeyInput) as JsonMethodResolvedData['productKeys'],
+      users: resolveInput(userInput) as JsonMethodResolvedData['users'],
     };
 
     const data: JsonMethodData = {
       roles: formatRolesFromJson(resolvedData.roles),
       productKeys: resolvedData.productKeys,
       users: resolvedData.users,
-    }
+    };
 
     try {
-      console.info("insertion in the database");
-      const roles = await Role.insertFromData(data.roles) as Array<IRoleDocument>;
+      console.info('insertion in the database');
+      const roles = (await Role.insertFromData(data.roles)) as Array<IRoleDocument>;
       await Role.updateDefaultValues();
-      const productKeys = await ProductKey.insertFromData(data.productKeys) as Array<IProductKeyDocument>;
-      const userData = await formatUsersFromJson(data.users, coerceRole) as Array<RequiredUserAsJson>;
-      const users = await User.insertFromData(userData) as Array<IUserDocument>;
-      console.info("number of inserted documents", {
+      const productKeys = (await ProductKey.insertFromData(
+        data.productKeys
+      )) as Array<IProductKeyDocument>;
+      const userData = await formatUsersFromJson(data.users, mustCoerceRole);
+      const users = (await User.insertFromData(userData)) as Array<IUserDocument>;
+      console.info('number of inserted documents', {
         roles: roles?.length ? roles.length : 0,
         productKeys: productKeys?.length ? productKeys.length : 0,
         users: users?.length ? users.length : 0,
-      });      
+      });
     } catch (error) {
       console.error(`error during the ingestion phase:\n`);
       throw error;
     }
-    console.log("initDatabase -- end");
-  };
+    console.info('initDatabase -- end');
+  }
 
   async function initDatabaseWithRandomMethod({
-      roleInput,
-      productKeyInput,
-      userInput,
-      coerceRole = true, //false,
-    }: InitDatabaseWithRandomMethodOptions
-  ): Promise<void> {
-
+    roleInput,
+    productKeyInput,
+    userInput,
+    mustCoerceRole = true, // false,
+  }: InitDatabaseWithRandomMethodOptions): Promise<void> {
     // prepare data to insert
     const resolvedData: RandomMethodResolvedData = {
-      roles: resolveInput(roleInput) as RandomMethodResolvedData["roles"],
-      productKeys: resolveInput(productKeyInput) as RandomMethodResolvedData["productKeys"],
-      users: resolveInput(userInput) as RandomMethodResolvedData["users"],
+      roles: resolveInput(roleInput) as RandomMethodResolvedData['roles'],
+      productKeys: resolveInput(productKeyInput) as RandomMethodResolvedData['productKeys'],
+      users: resolveInput(userInput) as RandomMethodResolvedData['users'],
     };
 
     // random roles
-    const formattedRoles: RandomMethodData["roles"] = formatRolesFromRandom(resolvedData.roles);
+    const formattedRoles: RandomMethodData['roles'] = formatRolesFromRandom(resolvedData.roles);
 
     // random product keys
-    const [formattedProductKeys, finalProductKeys] =
-      formatProductKeysFromRandom(resolvedData.productKeys)
+    const [formattedProductKeys, finalProductKeys] = formatProductKeysFromRandom(
+      resolvedData.productKeys
+    );
 
     // random users
-    const formattedUsers: RandomMethodData["users"] = formatUsersFromRandom(
+    const formattedUsers: RandomMethodData['users'] = formatUsersFromRandom(
       resolvedData.roles.roles,
-      finalProductKeys as Array<string>,
-      resolvedData.users);
-    
+      finalProductKeys,
+      resolvedData.users
+    );
+
     const data: RandomMethodData = {
       roles: formattedRoles,
-      productKeys: formattedProductKeys as RandomMethodData["productKeys"],
+      productKeys: formattedProductKeys,
       users: formattedUsers,
     };
 
     try {
-      console.info("insertion in the database");
-      const roles = await Role.insertFromData(data.roles) as Array<IRoleDocument>;
+      console.info('insertion in the database');
+      const roles = (await Role.insertFromData(data.roles)) as Array<IRoleDocument>;
       await Role.updateDefaultValues();
-      const productKeys = await ProductKey.insertFromData(data.productKeys) as Array<IProductKeyDocument>;
-      const userData = await formatUsersFromJson(data.users, coerceRole);
-      const users = await User.insertFromData(userData) as Array<IUserDocument>;
-      console.info("number of inserted documents", {
+      const productKeys = (await ProductKey.insertFromData(
+        data.productKeys
+      )) as Array<IProductKeyDocument>;
+      const userData = await formatUsersFromJson(data.users, mustCoerceRole);
+      const users = (await User.insertFromData(userData)) as Array<IUserDocument>;
+      console.info('number of inserted documents', {
         roles: roles?.length ? roles.length : 0,
         productKeys: productKeys?.length ? productKeys.length : 0,
         users: users?.length ? users.length : 0,
-      });      
+      });
     } catch (error) {
       console.error(`error during the ingestion phase:\n`);
       throw error;
     }
-    console.log("initDatabase -- end");
-  };
+    console.info('initDatabase -- end');
+  }
 
-  async function initDatabase(
-    method:string = "raw",
-    options:InitDatabaseOptions,
-  ): Promise<void> {
+  async function initDatabase(method: string = 'raw', options: InitDatabaseOptions): Promise<void> {
     // prepare data to insert
     console.info(`Chosen method ${method}.`);
     switch (method) {
-      case "raw":
+      case 'raw':
         await initDatabaseWithRawMethod(options as InitDatabaseWithRawMethodOptions);
         break;
-      case "json":
+      case 'json':
         await initDatabaseWithJsonMethod(options as InitDatabaseWithJsonMethodOptions);
         break;
-      case "random":
+      case 'random':
         await initDatabaseWithRandomMethod(options as InitDatabaseWithRandomMethodOptions);
         break;
       default:
-        throw new Error("Unknow method. Unable to continue.");
+        throw new Error('Unknow method. Unable to continue.');
     }
-  };
+  }
 
   async function dumpDatabase({
-    parentDir = "./tmp",
+    parentDir = './tmp',
     outputDirName = undefined,
     ignoreModels = [],
     keepModels = [],
   }: DumpDatabaseOptions): Promise<void> {
-    console.info("dumpDatabase -- init ");
+    console.info('dumpDatabase -- init ');
     // find list of models to dump
     let availableModels: Array<string> = Object.keys(connection.models);
     if (keepModels.length > 0) {
@@ -430,7 +433,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
     }
     if (availableModels.length === 0) {
       throw new Error(
-        "No more available models after filtering with keepModels and ignoreModels options!"
+        'No more available models after filtering with keepModels and ignoreModels options!'
       );
     }
 
@@ -441,31 +444,33 @@ function getDatabaseConnection(): DatabaseConnectionType {
     );
 
     // create directory if necessary
-    fs.mkdir(absoluteOutputDir, { recursive: true }, async  (err: NodeJS.ErrnoException | null, pth: string | undefined) => {
-      if (err) console.error(err);
-      console.info(
-        `folder already exists ? ${pth ? `true at ${pth}` : "false"}`
-      );
-    });
+    fs.mkdir(
+      absoluteOutputDir,
+      { recursive: true },
+      async (err: NodeJS.ErrnoException | null, pth: string | undefined) => {
+        if (err) console.error(err);
+        console.info(`folder already exists ? ${pth ? `true at ${pth}` : 'false'}`);
+      }
+    );
 
     // create dump files
-    for (let index: number = 0; index < availableModels.length; index++) {
+    for (let index = 0; index < availableModels.length; index += 1) {
       const modelName: string = availableModels[index];
       const filename = path.join(absoluteOutputDir, `${modelName}.json`);
-      
+
       try {
         const model = connection.models[modelName] as IGenericModel;
         await model.dumpData({ filename });
-        console.log(`Dump file at ${filename} from model ${modelName}`);
+        console.info(`Dump file at ${filename} from model ${modelName}`);
       } catch (error) {
         console.error(error);
         if (error instanceof Error) {
-          throw error
+          throw error;
         }
-        throw new Error("Unknown error");
+        throw new Error('Unknown error');
       }
     }
-  };
+  }
 
   async function addSuperAdminUser({
     username = undefined,
@@ -477,8 +482,8 @@ function getDatabaseConnection(): DatabaseConnectionType {
     validityPeriod = 24 * 30 * 24 * 60 * 60, // in seconds aka 2 years
   }: AddSuperAdminUserOptions): Promise<void> {
     try {
-      let productKeyDoc: IProductKeyDocument|null = null;
-      let roleDoc: IRoleDocument|null = null;
+      let productKeyDoc: IProductKeyDocument | null = null;
+      let roleDoc: IRoleDocument | null = null;
 
       // -- retrieve productKeyDoc
       const {
@@ -493,7 +498,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
 
       // we need a new key
       if (isKeyInvalid || !productKey || !isStored) {
-        console.info("A new Product Key has been added.");
+        console.info('A new Product Key has been added.');
         // new key to add
         const newProductKey = new ProductKey({
           key: isKeyInvalid ? undefined : productKey,
@@ -505,7 +510,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
       }
       // we have a key attached to no one
       if (isStored) {
-        console.info("The key is stored but is it attached to a user ?");
+        console.info('The key is stored but is it attached to a user ?');
         if (error) {
           console.error(error);
         }
@@ -514,21 +519,21 @@ function getDatabaseConnection(): DatabaseConnectionType {
           const isSamePassword = await linkedUser.checkPassword(password);
           // CHECK IF SAME USER
           if (isSamePassword && linkedUser.email === email) {
-            console.info("Super admin already registered");
+            console.info('Super admin already registered');
             if (!isInUse && storedProductKey) {
               storedProductKey.activate(activationDate);
               await storedProductKey.save();
             }
           }
-          console.error("It seems like this product key is registered to another user.");
-          throw new Error("REGISTERED_PRODUCT_KEY_TO_ANOTHER_USER");
+          console.error('It seems like this product key is registered to another user.');
+          throw new Error('REGISTERED_PRODUCT_KEY_TO_ANOTHER_USER');
         }
         productKeyDoc = storedProductKey;
       }
 
       if (!productKeyDoc) {
-        console.error("We couldn't generate the wanted product key.")
-        throw new Error("UNFOUND_PRODUCT_KEY");
+        console.error("We couldn't generate the wanted product key.");
+        throw new Error('UNFOUND_PRODUCT_KEY');
       }
 
       // -- retrieve roleDoc
@@ -539,8 +544,8 @@ function getDatabaseConnection(): DatabaseConnectionType {
       ).lean();
 
       if (!roleDoc) {
-        console.error("We couldn't find the highest role.")
-        throw new Error("UNFOUND_HIGHEST_ROLE");
+        console.error("We couldn't find the highest role.");
+        throw new Error('UNFOUND_HIGHEST_ROLE');
       }
 
       // -- create user
@@ -555,15 +560,15 @@ function getDatabaseConnection(): DatabaseConnectionType {
       const userDoc = await user.save();
 
       if (!userDoc) {
-        console.error("We couldn't create/save a user instance.")
-        throw new Error("NEW_USER_NOT_CREATED");
+        console.error("We couldn't create/save a user instance.");
+        throw new Error('NEW_USER_NOT_CREATED');
       }
     } catch (error) {
-      console.error("Something unknown happened.")
+      console.error('Something unknown happened.');
       throw error;
     }
-  };
-  
+  }
+
   // create output
   const db: DatabaseConnectionType = {
     config: dbConfig,
@@ -577,13 +582,13 @@ function getDatabaseConnection(): DatabaseConnectionType {
     addSuperAdminUser,
   };
   return db;
-};
+}
 
 function getSafelyDatabaseConnection(): DatabaseConnectionType {
   try {
-    return getDatabaseConnection() as DatabaseConnectionType;
+    return getDatabaseConnection();
   } catch (error) {
-    console.error("Database connection error");
+    console.error('Database connection error');
     throw error;
   }
 }

@@ -1,10 +1,10 @@
-import { SchemaDefinition, SchemaDefinitionType, SchemaOptions, Schema } from "mongoose";
-import { BaseSchemaClass, generateCompleteSchema } from "utils/model";
-import { IUserDocument, IUserModel } from "./user.types";
+import { SchemaDefinition, SchemaDefinitionType, SchemaOptions, Schema } from 'mongoose';
+import { BaseSchemaClass, generateCompleteSchema } from 'utils/model';
+import { IUserDocument, IUserModel } from './user.types';
 
-import statics from "./user.statics";
-import methods from "./user.methods";
-import virtuals from "./user.virtuals";
+import statics from './user.statics';
+import methods from './user.methods';
+import virtuals from './user.virtuals';
 
 const userDefinition: SchemaDefinition<SchemaDefinitionType<IUserDocument>> = {
   username: {
@@ -22,7 +22,7 @@ const userDefinition: SchemaDefinition<SchemaDefinitionType<IUserDocument>> = {
   },
   productKey: {
     type: Schema.Types.ObjectId,
-    ref: "ProductKey",
+    ref: 'ProductKey',
   },
   activated: {
     type: Boolean,
@@ -31,16 +31,16 @@ const userDefinition: SchemaDefinition<SchemaDefinitionType<IUserDocument>> = {
   },
   role: {
     type: Schema.Types.ObjectId,
-    ref: "Role",
+    ref: 'Role',
   },
   refreshToken: { type: String },
 };
 
-const userOptions: SchemaOptions = { 
-  collection: "user",
+const userOptions: SchemaOptions = {
+  collection: 'user',
   timestamps: true, // createdAt & updatedAt
-  toObject: {virtuals: true},
-  toJSON: {virtuals: true },
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true },
 };
 
 const userSchema = generateCompleteSchema<IUserDocument, IUserModel>(
@@ -49,6 +49,7 @@ const userSchema = generateCompleteSchema<IUserDocument, IUserModel>(
   statics,
   methods,
   virtuals,
-  BaseSchemaClass);
+  BaseSchemaClass
+);
 
 export default userSchema;

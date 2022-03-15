@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 
-type AsyncMiddleware<T = void> = (req: Request, res: Response, next: NextFunction) => Promise<T>; 
+type AsyncMiddleware<T = void> = (req: Request, res: Response, next: NextFunction) => Promise<T>;
 
 function asyncHelper<T>(fn: AsyncMiddleware<T>) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -10,6 +10,4 @@ function asyncHelper<T>(fn: AsyncMiddleware<T>) {
   };
 }
 
-export {
-  asyncHelper,
-}
+export { asyncHelper };

@@ -1,14 +1,18 @@
-import { IRoleDocument, IRoleModel, isLike, CheckRoleOptions, CheckRoleType, ObjectOfFunctions } from "./role.types";
+import {
+  IRoleDocument,
+  IRoleModel,
+  isLike,
+  CheckRoleOptions,
+  CheckRoleType,
+  ObjectOfFunctions,
+} from './role.types';
 
-async function findByName(
-  this: IRoleModel,
-  name: string,
-): Promise<IRoleDocument|null> {
+async function findByName(this: IRoleModel, name: string): Promise<IRoleDocument | null> {
   try {
     return await this.findOne({ name });
   } catch (error) {
     console.error("Couldn't find role by name");
-    throw error
+    throw error;
   }
 }
 
@@ -35,33 +39,40 @@ async function allRoles(this: IRoleModel): Promise<IRoleDocument[]> {
   try {
     return await this.find({}, { _id: 1, name: 1 }).lean();
   } catch (error) {
-    console.error("Error when retrieving all roles");
+    console.error('Error when retrieving all roles');
     throw error;
   }
 }
 
-async function checkRole(this: IRoleModel, { id, name, forceRole = true }: CheckRoleOptions): Promise<CheckRoleType> {
+// eslint-disable-next-line max-len
+async function checkRole(
+  this: IRoleModel,
+  { id, name, forceRole = true }: CheckRoleOptions
+): Promise<CheckRoleType> {
   // Check for the role and if it's okay add it to the new user
-  let errorMsg: string = "";
-  let role: IRoleDocument | undefined = undefined;
+  let errorMsg = '';
+  let role: IRoleDocument | undefined;
 
   try {
-    const allRoles: IRoleDocument[] = await this.allRoles();
+    const roles: IRoleDocument[] = await this.allRoles();
     // retrieve role doc from given id
     if (id) {
-      role = allRoles.find((r: IRoleDocument) => r._id.toString() === id.toString()) as IRoleDocument | undefined;
+      role = roles.find((r: IRoleDocument) => r._id.toString() === id.toString());
     }
     // retrieve role doc from given role name
     if (name && !role) {
-      role = allRoles.find((r: IRoleDocument) => r.name === name) as IRoleDocument | undefined;
+      role = roles.find((r: IRoleDocument) => r.name === name);
     }
     // retrieve role from default role
     if (forceRole && !role) {
-      console.log("No given role. Set to default.");
-      role = allRoles.find((r: IRoleDocument) => r.name === this.defaultRole) as IRoleDocument | undefined;
+      console.info('No given role. Set to default.');
+      role = roles.find((r: IRoleDocument) => r.name === this.defaultRole);
     }
   } catch (error: unknown) {
-    errorMsg = error instanceof Error ? error.message: "An unknown error has been caught when checking a potential role!!!";
+    errorMsg =
+      error instanceof Error
+        ? error.message
+        : 'An unknown error has been caught when checking a potential role!!!';
   }
   return { isRoleFound: !!role, role, errorMsg };
 }
@@ -71,5 +82,5 @@ const statics: ObjectOfFunctions = {
   updateDefaultValues,
   allRoles,
   checkRole,
-}
+};
 export default statics;

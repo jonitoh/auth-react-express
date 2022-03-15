@@ -1,17 +1,17 @@
-import { SchemaDefinition, SchemaDefinitionType, SchemaOptions } from "mongoose";
-import { BaseSchemaClass, generateCompleteSchema } from "utils/model";
-import { IProductKeyDocument, IProductKeyModel } from "./product-key.types";
+import { SchemaDefinition, SchemaDefinitionType, SchemaOptions } from 'mongoose';
+import { BaseSchemaClass, generateCompleteSchema } from 'utils/model';
+import { IProductKeyDocument, IProductKeyModel } from './product-key.types';
 
-import statics from "./product-key.statics";
-import methods from "./product-key.methods";
-import virtuals from "./product-key.virtuals";
+import statics from './product-key.statics';
+import methods from './product-key.methods';
+import virtuals from './product-key.virtuals';
 
 const productKeyDefinition: SchemaDefinition<SchemaDefinitionType<IProductKeyDocument>> = {
   key: {
     type: String,
     required: true,
     unique: true,
-    default: function (this:IProductKeyModel): string {
+    default(this: IProductKeyModel): string {
       return this.generateKey();
     },
     immutable: true,
@@ -33,11 +33,11 @@ const productKeyDefinition: SchemaDefinition<SchemaDefinitionType<IProductKeyDoc
   },
 };
 
-const productKeyOptions: SchemaOptions = { 
-  collection: "productkey",
+const productKeyOptions: SchemaOptions = {
+  collection: 'productkey',
   timestamps: true, // createdAt & updatedAt
-  toObject: {virtuals: true},
-  toJSON: {virtuals: true },
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true },
 };
 
 const productKeySchema = generateCompleteSchema<IProductKeyDocument, IProductKeyModel>(
@@ -46,6 +46,7 @@ const productKeySchema = generateCompleteSchema<IProductKeyDocument, IProductKey
   statics,
   methods,
   virtuals,
-  BaseSchemaClass);
+  BaseSchemaClass
+);
 
 export default productKeySchema;

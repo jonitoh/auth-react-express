@@ -1,8 +1,11 @@
-import { Model, Document, SchemaTimestampsConfig, ObjectId } from "mongoose";
-import { BaseSchemaClass, ObjectOfFunctions as GenericObjectOfFunctions } from "../../utils/model";
-//import { isLike as GenericIsLike } from "../../utils/main";
+import { Model, Document, SchemaTimestampsConfig, ObjectId } from 'mongoose';
+import { BaseSchemaClass, ObjectOfFunctions as GenericObjectOfFunctions } from '../../utils/model';
+// import { isLike as GenericIsLike } from "../../utils/main";
 
-export interface ProductKeyLike { key: string, _id: ObjectId | string };
+export interface ProductKeyLike {
+  key: string;
+  _id: ObjectId | string;
+}
 /*
 const PRODUCT_KEYS_PROPS: Array<keyof ProductKeyLike> = ["key", "_id"];
 export function isLike(pk:unknown): pk is ProductKeyLike {
@@ -19,32 +22,26 @@ export interface IProductKey {
   isValid: boolean;
 }
 
-export type CheckIfStoredType = { 
+export type CheckIfStoredType = {
   isKeyInvalid: boolean;
   isStored: boolean;
   storedProductKey: IProductKeyDocument | null;
   errorMsg: string | null;
-}
+};
 
 export interface IProductKeyDocument extends IProductKey, Document, SchemaTimestampsConfig {
   // new methods added here
-  activate(this: IProductKeyDocument, activationDate: Date|undefined): void;
+  activate(this: IProductKeyDocument, activationDate: Date | undefined): void;
   deactivate(this: IProductKeyDocument): void;
-  isInUse(this: IProductKeyDocument): [boolean, string|null];
+  isInUse(this: IProductKeyDocument): [boolean, string | null];
 }
-  
+
 export interface IProductKeyModel extends Model<IProductKeyDocument>, BaseSchemaClass {
   // new statics added here
-  generateKey(this: IProductKeyModel):string;
+  generateKey(this: IProductKeyModel): string;
   hasWrongFormat(key: unknown): boolean;
-  findByKey(
-    this: IProductKeyModel,
-    key: string,
-  ): Promise<IProductKeyDocument|null>;
-  checkIfStored(this: IProductKeyModel, key:string|undefined): Promise<CheckIfStoredType>;
+  findByKey(this: IProductKeyModel, key: string): Promise<IProductKeyDocument | null>;
+  checkIfStored(this: IProductKeyModel, key: string | undefined): Promise<CheckIfStoredType>;
 }
 
-export type ObjectOfFunctions = GenericObjectOfFunctions<IProductKeyDocument, IProductKeyModel>
-
-
-
+export type ObjectOfFunctions = GenericObjectOfFunctions<IProductKeyDocument, IProductKeyModel>;

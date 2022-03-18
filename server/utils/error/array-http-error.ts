@@ -1,4 +1,4 @@
-import { HTTP_STATUS_CODE } from 'utils/main';
+import { HTTP_STATUS_CODE } from '../main';
 import { HTTPError } from './http-error';
 
 function formatMessageFromHTTPError(obj: HTTPError): string {
@@ -20,8 +20,8 @@ export class ArrayHTTPError extends HTTPError {
   }
 
   public constructor(
-    message: string = 'Unexpected error',
-    additionalMessage: string = '',
+    message = 'Unexpected error',
+    additionalMessage = '',
     statusCode: number = HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
     info: unknown = {}
   ) {
@@ -38,7 +38,7 @@ export class ArrayHTTPError extends HTTPError {
 
   public info!: object;
 
-  private _separator: string = ' || ';
+  private _separator = ' || ';
 
   public errors: string[];
 

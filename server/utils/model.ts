@@ -6,14 +6,9 @@ import {
   SchemaDefinition,
   SchemaDefinitionType,
   SchemaOptions,
-  Types,
   Document,
   SchemaTimestampsConfig,
 } from 'mongoose';
-
-interface IHasObjectId {
-  _id: Types.ObjectId;
-}
 
 type DumpDataOptions = {
   filename: string;
@@ -22,6 +17,11 @@ type DumpDataOptions = {
   options?: QueryOptions | null;
   encoding?: WriteFileOptions;
 };
+
+// cf. https://2ality.com/2020/04/classes-as-values-typescript.html
+interface Class<T = unknown> {
+  new (...args: unknown[]): T;
+}
 
 class BaseSchemaClass extends Model {
   // `insertFromData` becomes a static
@@ -41,6 +41,7 @@ class BaseSchemaClass extends Model {
       encoding = 'utf-8',
     }: DumpDataOptions
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const data = (await this.find(filter, projection, options)) as Array<unknown>;
     const jsonData = JSON.stringify(data);
     fs.writeFile(filename, jsonData, encoding, (err) => {
@@ -56,11 +57,26 @@ interface IGenericModel extends Model<IGenericDocument>, BaseSchemaClass {}
 // eslint-disable-next-line max-len
 type StaticSchemaFunction<DocType, ModelType> = (
   this: ModelType extends Model<DocType> ? ModelType : never,
-  ...args: unknown[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...args: any[]
 ) => unknown;
+type MethodSchemaFunction<ModelOrDocumentType> = (
+  this: ModelOrDocumentType,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...args: any[]
+) => unknown;
+type BasicFunction = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...args: any[]
+) => unknown;
+
 // eslint-disable-next-line max-len
 type ObjectOfFunctions<DocType, ModelType> = {
-  [key: string]: Function | StaticSchemaFunction<DocType, ModelType>;
+  [key: string]:
+    | BasicFunction
+    | MethodSchemaFunction<ModelType>
+    | MethodSchemaFunction<DocType>
+    | StaticSchemaFunction<DocType, ModelType>;
 };
 
 function extractAccessorAndVirtual(name: string): ['get' | 'set' | '', string] {
@@ -78,6 +94,11 @@ function addMethodsOrStaticsOrVirtualsToSchema<DocType, ModelType>(
   functions?: ObjectOfFunctions<DocType, ModelType>
 ): Schema<DocType, ModelType> {
   if (!functions) {
+    console.info(`No functions to add`);
+    return schema;
+  }
+  if (!['method', 'static', 'virtual'].includes(category)) {
+    console.error(`Unknown category: ${category}`);
     return schema;
   }
   const newSchema = schema;
@@ -87,24 +108,30 @@ function addMethodsOrStaticsOrVirtualsToSchema<DocType, ModelType>(
     const func: unknown = functions[funcName];
     let willPrintError = false;
     if (func instanceof Function) {
-      if (category === 'method') {
-        newSchema.methods[funcName] = func;
-      }
-      if (category === 'static') {
-        // TODO au secours
-        newSchema.statics[funcName] = func as (this: ModelType, ...args: unknown[]) => unknown;
-      } else {
-        willPrintError = true;
-      }
-      if (category === 'virtual') {
-        const [accessor, virtual] = extractAccessorAndVirtual(funcName);
-        if (accessor === 'get') {
-          newSchema.virtual(virtual).get(func);
-        } else if (accessor === 'set') {
-          newSchema.virtual(virtual).set(func);
-        } else {
-          willPrintError = true;
+      switch (category) {
+        case 'method': {
+          newSchema.methods[funcName] = func;
+          break;
         }
+        case 'static': {
+          newSchema.statics[funcName] = func as MethodSchemaFunction<ModelType>;
+          break;
+        }
+        case 'virtual': {
+          const [accessor, virtual] = extractAccessorAndVirtual(funcName);
+          if (accessor === 'get') {
+            newSchema.virtual(virtual).get(func);
+          } else if (accessor === 'set') {
+            newSchema.virtual(virtual).set(func);
+          } else {
+            willPrintError = true;
+          }
+          break;
+        }
+        default:
+          willPrintError = true;
+          console.error('unknown category:', category);
+          break;
       }
     } else {
       willPrintError = true;
@@ -116,13 +143,13 @@ function addMethodsOrStaticsOrVirtualsToSchema<DocType, ModelType>(
   return newSchema;
 }
 
-function generateCompleteSchema<DocType, ModelType>(
+function generateCompleteSchema<DocType, ModelType, SchemaClassType>(
   definition?: SchemaDefinition<SchemaDefinitionType<DocType>>,
   options?: SchemaOptions,
   statics?: ObjectOfFunctions<DocType, ModelType>,
   methods?: ObjectOfFunctions<DocType, ModelType>,
   virtuals?: ObjectOfFunctions<DocType, ModelType>,
-  schemaClass?: Function
+  schemaClass?: SchemaClassType extends Class<SchemaClassType> ? SchemaClassType : never
 ): Schema<DocType, ModelType> {
   // create a schema as usual
   let schema = new Schema(definition, options);
@@ -145,7 +172,6 @@ function generateCompleteSchema<DocType, ModelType>(
 }
 
 export {
-  IHasObjectId,
   BaseSchemaClass,
   StaticSchemaFunction,
   ObjectOfFunctions,

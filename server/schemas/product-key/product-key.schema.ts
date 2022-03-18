@@ -1,5 +1,5 @@
 import { SchemaDefinition, SchemaDefinitionType, SchemaOptions } from 'mongoose';
-import { BaseSchemaClass, generateCompleteSchema } from 'utils/model';
+import { BaseSchemaClass, generateCompleteSchema } from '../../utils/model';
 import { IProductKeyDocument, IProductKeyModel } from './product-key.types';
 
 import statics from './product-key.statics';
@@ -40,13 +40,11 @@ const productKeyOptions: SchemaOptions = {
   toJSON: { virtuals: true },
 };
 
-const productKeySchema = generateCompleteSchema<IProductKeyDocument, IProductKeyModel>(
-  productKeyDefinition,
-  productKeyOptions,
-  statics,
-  methods,
-  virtuals,
+// eslint-disable-next-line max-len
+const productKeySchema = generateCompleteSchema<
+  IProductKeyDocument,
+  IProductKeyModel,
   BaseSchemaClass
-);
+>(productKeyDefinition, productKeyOptions, statics, methods, virtuals, BaseSchemaClass);
 
 export default productKeySchema;

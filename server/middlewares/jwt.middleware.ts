@@ -4,11 +4,11 @@ import {
   extractTokenFromHeader,
   verifyAccessToken,
   verifyRefreshToken,
-} from 'config/jwt.config';
-import { HTTPError } from 'utils/error/http-error';
-import { HTTP_STATUS_CODE } from 'utils/main';
+} from '../config/jwt.config';
+import { HTTPError } from '../utils/error/http-error';
+import { HTTP_STATUS_CODE, TypeLike } from '../utils/main';
 
-function authentificateAccessToken(req: Request, res: Response, next: NextFunction) {
+function authentificateAccessToken(req: Request, res: Response, next: NextFunction): void {
   // console.info("into authentificateAccessToken");
   const authHeader: string | undefined = req.headers.authorization;
   const token: string | undefined = extractTokenFromHeader(authHeader);
@@ -39,10 +39,11 @@ function authentificateAccessToken(req: Request, res: Response, next: NextFuncti
   }
 }
 
-function authentificateRefreshToken(req: Request, res: Response, next: NextFunction) {
+function authentificateRefreshToken(req: Request, res: Response, next: NextFunction): void {
   // console.info("into authentificateRefreshToken");
-  const token = req.signedCookies?.refreshToken;
-  if (!token) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { refreshToken }: { refreshToken: TypeLike } = req.signedCookies;
+  if (!refreshToken) {
     return next(
       new HTTPError(
         'NO_TOKEN_PROVIDED',
@@ -53,7 +54,7 @@ function authentificateRefreshToken(req: Request, res: Response, next: NextFunct
     );
   }
   try {
-    const decoded: DecodedPayload = verifyRefreshToken(token);
+    const decoded: DecodedPayload = verifyRefreshToken(refreshToken);
     req.checks = {
       ...req.checks,
       userId: decoded.id,

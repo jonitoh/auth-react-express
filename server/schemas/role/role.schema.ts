@@ -1,5 +1,5 @@
 import { SchemaDefinition, SchemaDefinitionType, SchemaOptions } from 'mongoose';
-import { BaseSchemaClass, generateCompleteSchema } from 'utils/model';
+import { BaseSchemaClass, generateCompleteSchema } from '../../utils/model';
 import { IRoleDocument, IRoleModel } from './role.types';
 
 import statics from './role.statics';
@@ -60,7 +60,7 @@ const roleOptions: SchemaOptions = {
   toJSON: { virtuals: true },
 };
 
-const roleSchema = generateCompleteSchema<IRoleDocument, IRoleModel>(
+const roleSchema = generateCompleteSchema<IRoleDocument, IRoleModel, BaseSchemaClass>(
   roleDefinition,
   roleOptions,
   statics,

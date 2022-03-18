@@ -5,8 +5,8 @@ import { formatDate } from './main';
 
 function handleErrorForLog<T>(
   error: T extends Error ? T : never,
-  priorMessage: string = '',
-  isStrictMode: boolean = false
+  priorMessage = '',
+  isStrictMode = false
 ): void {
   if (priorMessage) {
     console.error(priorMessage);

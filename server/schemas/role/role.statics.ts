@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongoose';
 import {
   IRoleDocument,
   IRoleModel,
@@ -9,7 +10,7 @@ import {
 
 async function findByName(this: IRoleModel, name: string): Promise<IRoleDocument | null> {
   try {
-    return await this.findOne({ name });
+    return this.findOne({ name });
   } catch (error) {
     console.error("Couldn't find role by name");
     throw error;
@@ -23,13 +24,19 @@ async function updateDefaultValues(this: IRoleModel): Promise<void> {
   }
   if (!this.defaultRoleName) {
     throw new Error(
-      `We can't update the default values with no references: name (${this.defaultRoleName}) and role (${this.defaultRole})`
+      `We can't update the default values with no references: name (${
+        this.defaultRoleName as string
+      }) and role such as { _id: ${(
+        (this.defaultRole as IRoleDocument)._id as ObjectId
+      ).toString()}, name: ${(this.defaultRole as IRoleDocument).name}}`
     );
   }
-  const role = await this.findOne({ name: this.defaultRoleName });
+  const role = await this.findOne({ name: this.defaultRoleName as string });
   if (!role) {
     throw new Error(
-      `We can't update the default values with wrong references: name (${this.defaultRoleName}) and role (${role})`
+      `We can't update the default values with no references: name (${
+        this.defaultRoleName as string
+      }) and a null role`
     );
   }
   this.defaultRole = role;
@@ -37,7 +44,7 @@ async function updateDefaultValues(this: IRoleModel): Promise<void> {
 
 async function allRoles(this: IRoleModel): Promise<IRoleDocument[]> {
   try {
-    return await this.find({}, { _id: 1, name: 1 }).lean();
+    return this.find({}, { _id: 1, name: 1 }).lean();
   } catch (error) {
     console.error('Error when retrieving all roles');
     throw error;
@@ -57,7 +64,7 @@ async function checkRole(
     const roles: IRoleDocument[] = await this.allRoles();
     // retrieve role doc from given id
     if (id) {
-      role = roles.find((r: IRoleDocument) => r._id.toString() === id.toString());
+      role = roles.find((r: IRoleDocument) => (r._id as ObjectId).toString() === id.toString());
     }
     // retrieve role doc from given role name
     if (name && !role) {

@@ -1,6 +1,6 @@
 import { Model, Document, SchemaTimestampsConfig, Types } from 'mongoose';
-import { IProductKeyDocument } from 'schemas/product-key/product-key.types';
-import { IRoleDocument } from 'schemas/role/role.types';
+import { IProductKeyDocument } from '../product-key/product-key.types';
+import { IRoleDocument } from '../role/role.types';
 import { BaseSchemaClass, ObjectOfFunctions as GenericObjectOfFunctions } from '../../utils/model';
 // import { isLike as GenericIsLike } from "../../utils/main";
 

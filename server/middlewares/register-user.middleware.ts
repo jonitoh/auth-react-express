@@ -1,13 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import db from 'models';
-import { HTTPError } from 'utils/error/http-error';
-import { asyncHelper } from 'utils/express';
-import { HTTP_STATUS_CODE } from 'utils/main';
+import db from '../models';
+import { HTTPError } from '../utils/error/http-error';
+import { asyncMiddlewareHelper } from '../utils/express';
+import { HTTP_STATUS_CODE } from '../utils/main';
 
 const { Role, User, ProductKey } = db;
 
-async function checkDuplicateWithUsernameOrEmail(req: Request, res: Response, next: NextFunction) {
-  const { email, username } = req.body;
+// eslint-disable-next-line max-len
+async function checkDuplicateWithUsernameOrEmail(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { email, username }: Record<'email' | 'username', string> = req.body;
   let isUserExists = false;
 
   // check email
@@ -34,9 +40,16 @@ async function checkDuplicateWithUsernameOrEmail(req: Request, res: Response, ne
   next();
 }
 
-async function checkProductKeyStored(req: Request, res: Response, next: NextFunction) {
+// eslint-disable-next-line max-len
+async function checkProductKeyStored(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { productKey }: { productKey: string } = req.body;
   const { isKeyInvalid, isStored, storedProductKey, errorMsg } = await ProductKey.checkIfStored(
-    req.body.productKey
+    productKey
   );
 
   if (isKeyInvalid) {
@@ -87,8 +100,11 @@ async function checkProductKeyStored(req: Request, res: Response, next: NextFunc
   );
 }
 
-async function checkRoleExists(req: Request, res: Response, next: NextFunction) {
-  const { roleName, roleId, forceRole } = req.body;
+type InfoFromBody = { roleName: string; roleId: string; forceRole: boolean | undefined };
+
+async function checkRoleExists(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { roleName, roleId, forceRole }: InfoFromBody = req.body;
   // --- Check for the role and if it's okay add it to the new user
   const { isRoleFound, role, errorMsg } = await Role.checkRole({
     id: roleId,
@@ -130,7 +146,7 @@ async function checkRoleExists(req: Request, res: Response, next: NextFunction) 
 }
 
 export default {
-  checkDuplicateWithUsernameOrEmail: asyncHelper(checkDuplicateWithUsernameOrEmail),
-  checkProductKeyStored: asyncHelper(checkProductKeyStored),
-  checkRoleExists: asyncHelper(checkRoleExists),
+  checkDuplicateWithUsernameOrEmail: asyncMiddlewareHelper(checkDuplicateWithUsernameOrEmail),
+  checkProductKeyStored: asyncMiddlewareHelper(checkProductKeyStored),
+  checkRoleExists: asyncMiddlewareHelper(checkRoleExists),
 };

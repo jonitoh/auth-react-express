@@ -18,14 +18,13 @@ function hasWrongFormat(key: unknown): boolean {
 
 async function findByKey(this: IProductKeyModel, key: string): Promise<IProductKeyDocument | null> {
   try {
-    return await this.findOne({ key });
+    return this.findOne({ key });
   } catch (error) {
     console.error("Couldn't find product key by key");
     throw error;
   }
 }
 
-// eslint-disable-next-line max-len
 async function checkIfStored(
   this: IProductKeyModel,
   key: string | undefined

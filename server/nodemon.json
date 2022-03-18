@@ -1,5 +1,5 @@
 {
-  "ignore": ["temp", "logs", "**/*.test.ts", ".git", "node_modules"],
+  "ignore": ["temp", "logs", "**/*.test.ts", "dist", "node_modules"],
   "watch": ["server"],
   "exec": "npm dev",
   "ext": ".ts,.js"

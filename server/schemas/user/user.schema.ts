@@ -1,5 +1,5 @@
 import { SchemaDefinition, SchemaDefinitionType, SchemaOptions, Schema } from 'mongoose';
-import { BaseSchemaClass, generateCompleteSchema } from 'utils/model';
+import { BaseSchemaClass, generateCompleteSchema } from '../../utils/model';
 import { IUserDocument, IUserModel } from './user.types';
 
 import statics from './user.statics';
@@ -43,7 +43,7 @@ const userOptions: SchemaOptions = {
   toJSON: { virtuals: true },
 };
 
-const userSchema = generateCompleteSchema<IUserDocument, IUserModel>(
+const userSchema = generateCompleteSchema<IUserDocument, IUserModel, BaseSchemaClass>(
   userDefinition,
   userOptions,
   statics,

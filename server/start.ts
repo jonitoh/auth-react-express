@@ -2,12 +2,12 @@ import express, { Response, Request, Application } from 'express'; // Import exp
 import { Server } from 'http';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { getRoutes } from 'routes';
-import { resolveInput } from 'utils/main';
-import middlewares from 'middlewares';
-import { InitDatabaseOptions, AddSuperAdminUserOptions, DumpDatabaseOptions } from 'models/types';
-import db from 'models';
-import corsOptions from 'config/cors-options.config';
+import corsOptions from './config/cors-options.config';
+import db from './models';
+import { InitDatabaseOptions, AddSuperAdminUserOptions, DumpDatabaseOptions } from './models/types';
+import middlewares from './middlewares';
+import { getRoutes } from './routes';
+import { resolveInput } from './utils/main';
 
 const { verifyCredentials, handleLog, handleError } = middlewares;
 
@@ -15,7 +15,7 @@ const { verifyCredentials, handleLog, handleError } = middlewares;
 function setupCloseOnExit(server: Server): void {
   // thank you stack overflow
   // https://stackoverflow.com/a/14032965/971592
-  function exitHandler(options: { exit?: boolean } = {}) {
+  function exitHandler(options: { exit?: boolean } = {}): void {
     try {
       server.close();
       console.info('Server successfully closed');
@@ -44,7 +44,9 @@ function setupCloseOnExit(server: Server): void {
   process.on('uncaughtException', exitHandler.bind(null, { exit: true }));
 }
 
-async function startServer(port: number = parseFloat(process.env.PORT || '4000')): Promise<Server> {
+export async function startServer(
+  port: number = parseFloat(process.env.PORT || '4000')
+): Promise<Server> {
   // Initiate express app
   const app: Application = express();
 
@@ -71,8 +73,8 @@ async function startServer(port: number = parseFloat(process.env.PORT || '4000')
   app.use('/api', getRoutes());
 
   // Import database and check it's working
-  app.db = db;
-  console.info('check readyState', app.db.conn.readyState);
+  // app.locals.db = db;
+  console.info('check readyState', db.conn.readyState);
 
   // Populate database if necessary
   const shouldPopulateDatabase: boolean =
@@ -132,13 +134,13 @@ async function startServer(port: number = parseFloat(process.env.PORT || '4000')
 
     console.info('chosen method:', method);
     console.info('chosen options:', populateDbOptions);
-    await app.db.initDatabase(method, populateDbOptions as InitDatabaseOptions);
+    await db.initDatabase(method, populateDbOptions as InitDatabaseOptions);
   }
 
   // Add super admin product key
   if (process.env.SUPER_ADMIN_INFO) {
     const adminOptions = resolveInput(process.env.SUPER_ADMIN_INFO);
-    app.db.addSuperAdminUser(adminOptions as AddSuperAdminUserOptions);
+    await db.addSuperAdminUser(adminOptions as AddSuperAdminUserOptions);
   }
 
   // Make a dump of the database at the start of the app if necessary
@@ -150,7 +152,7 @@ async function startServer(port: number = parseFloat(process.env.PORT || '4000')
       parentDir: './temp',
       // outputDirName: "my-little-dump",
     };
-    await app.db.dumpDatabase(dumpDbOptions);
+    await db.dumpDatabase(dumpDbOptions);
     console.info('populate database -- end');
   }
 
@@ -181,7 +183,7 @@ async function startServer(port: number = parseFloat(process.env.PORT || '4000')
           usedServer && typeof usedServer !== 'string' ? usedServer.address : 'unknown'
         }`
       );
-      console.info(`Mongo uri at ${app.db.config.URI || 'unknown'}`);
+      console.info(`Mongo uri at ${db.config.URI || 'unknown'}`);
       const originalClose = server.close.bind(server);
 
       function closeServer(callback?: ((err?: Error | undefined) => void) | undefined) {
@@ -195,4 +197,4 @@ async function startServer(port: number = parseFloat(process.env.PORT || '4000')
   });
 }
 
-export { startServer };
+export default { startServer };

@@ -1,14 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import db from 'models';
-import { IRoleDocument } from 'schemas/role/role.types';
-import { HTTPError } from 'utils/error/http-error';
-import { HTTP_STATUS_CODE } from 'utils/main';
-import { asyncHelper } from 'utils/express';
+import { ObjectId } from 'mongoose';
+import db from '../models';
+import { IRoleDocument } from '../schemas/role/role.types';
+import { HTTP_STATUS_CODE } from '../utils/main';
+import { HTTPError } from '../utils/error/http-error';
+import { asyncMiddlewareHelper, AsyncMiddleware } from '../utils/express';
 
 const { Role } = db;
 
-function hasRole(roleName: string | string[], shouldInclude: boolean = true) {
-  return async function middleware(req: Request, res: Response, next: NextFunction) {
+function hasRole(roleName: string | string[], shouldInclude = true): AsyncMiddleware {
+  return async function middleware(req: Request, res: Response, next: NextFunction): Promise<void> {
     // console.info("in hasRoles");
     let names: string[] = [];
     if (typeof roleName === 'string') {
@@ -21,12 +22,12 @@ function hasRole(roleName: string | string[], shouldInclude: boolean = true) {
     const allRoles: IRoleDocument[] = await Role.allRoles();
     const roles: string[] = allRoles
       .filter(({ name }): boolean => (shouldInclude ? names.includes(name) : !names.includes(name)))
-      .map(({ _id }): string => _id.toString());
+      .map((role: IRoleDocument): string => (role._id as ObjectId).toString());
     if (!roles.length) {
       return next(
         new HTTPError(
           'UNFOUND_ROLE',
-          `The following mandatory roles asked doesn't exist: ${names}`,
+          `The following mandatory roles asked doesn't exist: [${names.toString()}]`,
           HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
           {}
         )
@@ -34,7 +35,7 @@ function hasRole(roleName: string | string[], shouldInclude: boolean = true) {
     }
     const { roleId } = req.checks;
 
-    if (roles.includes(roleId)) {
+    if (roleId && roles.includes(roleId)) {
       // console.info("about to next from hasRole");
       return next();
     }
@@ -50,8 +51,8 @@ function hasRole(roleName: string | string[], shouldInclude: boolean = true) {
   };
 }
 
-function hasAtLeastLevel(level: number) {
-  return async function middleware(req: Request, res: Response, next: NextFunction) {
+function hasAtLeastLevel(level: number): AsyncMiddleware {
+  return async function middleware(req: Request, res: Response, next: NextFunction): Promise<void> {
     // console.info("in hasAtLeastLevel");
 
     const { roleId } = req.checks;
@@ -84,7 +85,7 @@ function hasAtLeastLevel(level: number) {
 }
 
 export default {
-  hasRole: (roleName: string | string[], shouldInclude: boolean = true) =>
-    asyncHelper(hasRole(roleName, shouldInclude)),
-  hasAtLeastLevel: (level: number) => asyncHelper(hasAtLeastLevel(level)),
+  hasRole: (roleName: string | string[], shouldInclude = true) =>
+    asyncMiddlewareHelper(hasRole(roleName, shouldInclude)),
+  hasAtLeastLevel: (level: number) => asyncMiddlewareHelper(hasAtLeastLevel(level)),
 };

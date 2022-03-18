@@ -1,12 +1,12 @@
 import { Connection, ObjectId } from 'mongoose';
-import { DbConfig } from 'config/db.config';
-import { IRole, IRoleModel } from 'schemas/role/role.types';
-import { IUser, IUserDocument, IUserModel } from 'schemas/user/user.types';
+import { DbConfig } from '../config/db.config';
+import { IRole, IRoleModel } from '../schemas/role/role.types';
+import { IUser, IUserDocument, IUserModel } from '../schemas/user/user.types';
 import {
   IProductKey,
   IProductKeyDocument,
   IProductKeyModel,
-} from 'schemas/product-key/product-key.types';
+} from '../schemas/product-key/product-key.types';
 
 type AnyObject = Record<string, unknown>;
 // ---- helpers ----

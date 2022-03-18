@@ -2,17 +2,17 @@
 import mongoose, { Connection, ObjectId } from 'mongoose';
 import path from 'path';
 import fs from 'fs';
-import dbConfig from 'config/db.config';
-import { resolveInput, randomNumber, randomDate, resolvePath, formatDate } from 'utils/main';
-import { IGenericModel } from 'utils/model';
-import roleSchema from 'schemas/role/role.schema';
-import { IRoleDocument, IRoleModel } from 'schemas/role/role.types';
-import userSchema from 'schemas/user/user.schema';
-import { IUserDocument, IUserModel } from 'schemas/user/user.types';
-import productKeySchema from 'schemas/product-key/product-key.schema';
-import { IProductKeyDocument, IProductKeyModel } from 'schemas/product-key/product-key.types';
+import dbConfig from '../config/db.config';
+import { resolveInput, randomNumber, randomDate, resolvePath, formatDate } from '../utils/main';
+import { IGenericModel } from '../utils/model';
+import roleSchema from '../schemas/role/role.schema';
+import { IRoleDocument, IRoleModel } from '../schemas/role/role.types';
+import userSchema from '../schemas/user/user.schema';
+import { IUserDocument, IUserModel } from '../schemas/user/user.types';
+import productKeySchema from '../schemas/product-key/product-key.schema';
+import { IProductKeyDocument, IProductKeyModel } from '../schemas/product-key/product-key.types';
 
-import { ArrayHTTPError } from 'utils/error/array-http-error';
+import { ArrayHTTPError } from '../utils/error/array-http-error';
 import {
   CheckProductKeyType,
   IDatabaseConnectionHelper,
@@ -87,12 +87,12 @@ function getDatabaseConnection(): DatabaseConnectionType {
       isKeyInvalid = ifStoredProductKey.isKeyInvalid;
       error.add(ifStoredProductKey.errorMsg);
 
-      if (isStored) {
+      if (isStored && storedProductKey) {
         // check if the product key is in use: activated and still valid
         [isInUse, isInUseMsg] = storedProductKey.isInUse();
 
         // check if the productKey is used by a user
-        linkedUser = await User.findOne({ productKey: storedProductKey._id });
+        linkedUser = await User.findOne({ productKey: storedProductKey._id as ObjectId });
       }
     } catch (err: unknown) {
       error.add(err);
@@ -181,7 +181,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
       }
       if (hasInconsistentRole) {
         if (mustCoerceRole) {
-          formattedRole = Role.defaultRole._id as ObjectId;
+          formattedRole = (Role.defaultRole as IRoleDocument)._id as ObjectId;
           hasInconsistentRole = false;
           console.warn('inconsistency on the role being corrected with the default value.');
         } else {
@@ -280,11 +280,14 @@ function getDatabaseConnection(): DatabaseConnectionType {
 
     try {
       console.info('insertion in the database');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const roles = (await Role.insertFromData(resolvedData.roles)) as Array<IRoleDocument>;
       await Role.updateDefaultValues();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const productKeys = (await ProductKey.insertFromData(
         resolvedData.productKeys
       )) as Array<IProductKeyDocument>;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const users = (await User.insertFromData(resolvedData.users)) as Array<IUserDocument>;
       console.info('number of inserted documents', {
         roles: roles?.length ? roles.length : 0,
@@ -320,12 +323,15 @@ function getDatabaseConnection(): DatabaseConnectionType {
 
     try {
       console.info('insertion in the database');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const roles = (await Role.insertFromData(data.roles)) as Array<IRoleDocument>;
       await Role.updateDefaultValues();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const productKeys = (await ProductKey.insertFromData(
         data.productKeys
       )) as Array<IProductKeyDocument>;
       const userData = await formatUsersFromJson(data.users, mustCoerceRole);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const users = (await User.insertFromData(userData)) as Array<IUserDocument>;
       console.info('number of inserted documents', {
         roles: roles?.length ? roles.length : 0,
@@ -375,12 +381,15 @@ function getDatabaseConnection(): DatabaseConnectionType {
 
     try {
       console.info('insertion in the database');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const roles = (await Role.insertFromData(data.roles)) as Array<IRoleDocument>;
       await Role.updateDefaultValues();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const productKeys = (await ProductKey.insertFromData(
         data.productKeys
       )) as Array<IProductKeyDocument>;
       const userData = await formatUsersFromJson(data.users, mustCoerceRole);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const users = (await User.insertFromData(userData)) as Array<IUserDocument>;
       console.info('number of inserted documents', {
         roles: roles?.length ? roles.length : 0,
@@ -394,7 +403,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
     console.info('initDatabase -- end');
   }
 
-  async function initDatabase(method: string = 'raw', options: InitDatabaseOptions): Promise<void> {
+  async function initDatabase(method = 'raw', options: InitDatabaseOptions): Promise<void> {
     // prepare data to insert
     console.info(`Chosen method ${method}.`);
     switch (method) {
@@ -447,7 +456,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
     fs.mkdir(
       absoluteOutputDir,
       { recursive: true },
-      async (err: NodeJS.ErrnoException | null, pth: string | undefined) => {
+      (err: unknown | null, pth: string | undefined) => {
         if (err) console.error(err);
         console.info(`folder already exists ? ${pth ? `true at ${pth}` : 'false'}`);
       }
@@ -460,6 +469,7 @@ function getDatabaseConnection(): DatabaseConnectionType {
 
       try {
         const model = connection.models[modelName] as IGenericModel;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         await model.dumpData({ filename });
         console.info(`Dump file at ${filename} from model ${modelName}`);
       } catch (error) {
@@ -553,8 +563,8 @@ function getDatabaseConnection(): DatabaseConnectionType {
         username,
         email,
         password: await User.hashPassword(password),
-        productKey: productKeyDoc._id,
-        role: roleDoc._id,
+        productKey: productKeyDoc._id as ObjectId,
+        role: roleDoc._id as ObjectId,
       });
 
       const userDoc = await user.save();

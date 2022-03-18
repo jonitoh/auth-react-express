@@ -1,4 +1,4 @@
-import { capitalize } from 'utils/main';
+import { capitalize } from '../../utils/main';
 import { IUserDocument, ObjectOfFunctions } from './user.types';
 
 function getCurrentUsername(this: IUserDocument): string {

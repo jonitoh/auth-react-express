@@ -1,7 +1,7 @@
 import { MongooseError } from 'mongoose';
 import { Router, Request, Response, NextFunction } from 'express';
-import { HTTPError } from 'utils/error/http-error';
-import { HTTP_STATUS_CODE } from 'utils/main';
+import { HTTPError } from '../utils/error/http-error';
+import { HTTP_STATUS_CODE } from '../utils/main';
 
 function handleDatabaseError(
   error: unknown,
@@ -44,7 +44,7 @@ function handleGenericError(error: unknown, req: Request, res: Response, next: N
   next(error);
 }
 
-function handleUnknownError(error: unknown, req: Request, res: Response, next: NextFunction): void {
+function handleUnknownError(error: unknown, req: Request, res: Response): void {
   res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).send({
     type: 'error',
     message: 'Unknown error',
@@ -64,10 +64,4 @@ function safelyHandleError(): Router {
   return router;
 }
 
-export default {
-  handleDatabaseError,
-  handleHTTPError,
-  handleGenericError,
-  handleUnknownError,
-  safelyHandleError,
-};
+export default { safelyHandleError };

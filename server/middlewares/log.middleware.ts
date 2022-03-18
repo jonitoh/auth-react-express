@@ -1,18 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import { fileLogger } from 'utils/log';
-import { HTTPError } from 'utils/error/http-error';
-import { isMinimalError } from 'utils/error/main';
+import { fileLogger } from '../utils/log';
+import { HTTPError } from '../utils/error/http-error';
+import { isMinimalError } from '../utils/error/main';
 
-function logHandler(req: Request, res: Response, next: NextFunction) {
+function logHandler(req: Request, res: Response, next: NextFunction): void {
   const message = `${req.method}\t${req.headers.origin || 'unknown'}\t${req.url}`;
   fileLogger(message, 'reqLog.txt');
   console.info(`METHOD=${req.method} SERVICE=${req.path}`);
   next();
 }
 
-function errorHandler(error: unknown, req: Request, res: Response, next: NextFunction) {
+function errorHandler(error: unknown, req: Request, res: Response, next: NextFunction): void {
   let message = '';
-  //   const message = `${err.name}: ${err.message}`;
   if (error instanceof HTTPError) {
     message = `${error.name}: ${error.fullMessage}`;
   } else if (error instanceof Error) {

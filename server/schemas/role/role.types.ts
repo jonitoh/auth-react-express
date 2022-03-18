@@ -23,9 +23,9 @@ export interface IRole {
   deleteOther: boolean;
   level: number;
   // new virtuals added here
-  _defaultRole?: RoleLike;
+  _defaultRole?: RoleLike | IRoleDocument;
   _defaultRoleName?: string;
-  defaultRole?: RoleLike;
+  defaultRole?: RoleLike | IRoleDocument;
   defaultRoleName?: string;
 }
 

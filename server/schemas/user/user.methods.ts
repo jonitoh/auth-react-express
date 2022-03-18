@@ -14,7 +14,7 @@ interface MyUserInterfaceForJson extends IUserDocument {
 function toResponseJson<TNewProps>(
   this: IUserDocument,
   properties: TNewProps,
-  willRemoveSensitiveData: boolean = false,
+  willRemoveSensitiveData = false,
   objectOptions: Partial<ToObjectReturnType> = { versionKey: false }
 ): UserTypeForJson<MyUserInterfaceForJson, TNewProps> {
   // eslint-disable-next-line max-len
@@ -35,7 +35,7 @@ function toResponseJson<TNewProps>(
 
 async function checkPassword(this: IUserDocument, password: string): Promise<boolean | undefined> {
   try {
-    return await bcrypt.compare(password, this.password);
+    return bcrypt.compare(password, this.password);
   } catch (error) {
     console.error('Error during the check password process');
     throw error;

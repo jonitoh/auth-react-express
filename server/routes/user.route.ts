@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import middlewares from 'middlewares';
-import controller from 'controllers/user.controller';
+import middlewares from '../middlewares';
+import controller from '../controllers/user.controller';
 
 const { verifyRoles } = middlewares;
 

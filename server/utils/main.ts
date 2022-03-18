@@ -25,7 +25,7 @@ function resolveInput<T>(input: unknown): Array<T> | T {
 const randomNumber = (start: number, end: number): number =>
   Math.round(start + Math.random() * (end - start));
 
-const randomDate = (start: Date, end: Date) =>
+const randomDate = (start: Date, end: Date): Date =>
   new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 
 const pad = (number: number): string => (number < 10 ? `0${number}` : `${number}`);
@@ -36,7 +36,7 @@ const formatDate = (date: Date): string =>
   )}-${pad(date.getUTCMinutes())}-${pad(date.getUTCSeconds())}`;
 
 // cf. https://www.digitalocean.com/community/tutorials/js-capitalizing-strings
-function capitalize(string: string, shouldLowerCase: boolean = false): string {
+function capitalize(string: string, shouldLowerCase = false): string {
   let result: string = string.trim();
   if (shouldLowerCase) {
     result = result.toLowerCase();
@@ -65,6 +65,12 @@ const HTTP_STATUS_CODE = {
   SERVICE_UNAVAILABLE: 503, // Server is currently unavailable
 } as const;
 
+type TypeLike<T = string> = T | undefined;
+
+type TypeLikeMutator<T> = {
+  [P in keyof T]: TypeLike<T[P]>;
+};
+
 export {
   resolveInput,
   resolvePath,
@@ -74,4 +80,6 @@ export {
   capitalize,
   isLike,
   HTTP_STATUS_CODE,
+  TypeLike,
+  TypeLikeMutator,
 };

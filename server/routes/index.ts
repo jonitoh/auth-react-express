@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import middlewares from 'middlewares';
+import middlewares from '../middlewares';
 import { getRouter as getAuthRouter } from './auth.route';
 import { getRouter as getProductKeyRouter } from './product-key.route';
 import { getRouter as getUserRouter } from './user.route';

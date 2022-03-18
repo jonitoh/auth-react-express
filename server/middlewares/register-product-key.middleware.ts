@@ -1,14 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
-import db from 'models';
-import { HTTPError } from 'utils/error/http-error';
-import { asyncHelper } from 'utils/express';
-import { HTTP_STATUS_CODE } from 'utils/main';
+import db from '../models';
+import { HTTPError } from '../utils/error/http-error';
+import { asyncMiddlewareHelper } from '../utils/express';
+import { HTTP_STATUS_CODE } from '../utils/main';
 
 const { ProductKey } = db;
 
 async function checkDuplicateProductKey(req: Request, res: Response, next: NextFunction) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { productKey }: { productKey: string } = req.body;
   const { isKeyInvalid, isStored, storedProductKey, errorMsg } = await ProductKey.checkIfStored(
-    req.body.productKey
+    productKey
   );
 
   if (isKeyInvalid) {
@@ -37,7 +39,7 @@ async function checkDuplicateProductKey(req: Request, res: Response, next: NextF
     return next(
       new HTTPError(
         'ERROR_WHEN_CHECK_DUPLICATE_PRODUCT_KEY',
-        `Failed! Product key has already been added and activated since ${storedProductKey.activationDate}.`,
+        `Failed! Product key has already been added and activated since ${storedProductKey.activationDate.toDateString()}.`,
         HTTP_STATUS_CODE.UNAUTHORIZED,
         {}
       )
@@ -47,5 +49,5 @@ async function checkDuplicateProductKey(req: Request, res: Response, next: NextF
 }
 
 export default {
-  checkDuplicateProductKey: asyncHelper(checkDuplicateProductKey),
+  checkDuplicateProductKey: asyncMiddlewareHelper(checkDuplicateProductKey),
 };

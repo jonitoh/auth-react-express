@@ -1,4 +1,4 @@
-import { HTTP_STATUS_CODE } from 'utils/main';
+import { HTTP_STATUS_CODE } from '../main';
 
 export class HTTPError extends Error {
   public static generateFromError(
@@ -10,8 +10,8 @@ export class HTTPError extends Error {
   }
 
   public constructor(
-    message: string = 'Unexpected error',
-    additionalMessage: string = '',
+    message = 'Unexpected error',
+    additionalMessage = '',
     statusCode: number = HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
     info: unknown = {}
   ) {

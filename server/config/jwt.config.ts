@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongoose';
 import jwt, { TokenExpiredError, JwtPayload } from 'jsonwebtoken';
-import { HTTPError } from 'utils/error/http-error';
-import { HTTP_STATUS_CODE, isLike } from 'utils/main';
+import { HTTPError } from '../utils/error/http-error';
+import { HTTP_STATUS_CODE, isLike } from '../utils/main';
 import authConfig from './auth.config';
 
 type PotentialUser = { role: ObjectId | string; _id: ObjectId | string };

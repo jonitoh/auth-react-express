@@ -1,8 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import db from 'models';
-import { HTTPError } from 'utils/error/http-error';
-import { asyncHelper } from 'utils/express';
-import { HTTP_STATUS_CODE } from 'utils/main';
+import { ObjectId } from 'mongoose';
+import { Request, Response } from 'express';
+import db from '../models';
+import { IProductKey } from '../schemas/product-key/product-key.types';
+import { HTTP_STATUS_CODE, TypeLikeMutator } from '../utils/main';
+import { asyncControllerHelper } from '../utils/express';
+import { HTTPError } from '../utils/error/http-error';
 
 const {
   User,
@@ -10,44 +12,39 @@ const {
   helpers: { checkProductKey },
 } = db;
 
-async function deleteProductKey(req: Request, res: Response, next: NextFunction) {
-  const { productKey } = req.body;
+async function deleteProductKey(req: Request, res: Response): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { productKey }: { productKey: string } = req.body;
   // --- Check for the product key
   const { isKeyInvalid, isStored, storedProductKey, isLinkedToUser, linkedUser, error } =
     await checkProductKey(productKey);
 
   if (isKeyInvalid) {
-    return next(
-      new HTTPError(
-        'INVALID_FORMAT_FOR_PRODUCT_KEY',
-        `Your product key has an invalid format.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'INVALID_FORMAT_FOR_PRODUCT_KEY',
+      `Your product key has an invalid format.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // send potential errors
   if (error) {
-    return next(
-      new HTTPError(
-        'ERROR_WHEN_CHECK_PRODUCT_KEY',
-        error,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'ERROR_WHEN_CHECK_PRODUCT_KEY',
+      error,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // product key not registered
   if (!isStored || !storedProductKey) {
-    return next(
-      new HTTPError(
-        'UNFOUND_PRODUCT_KEY',
-        `The given product key is unfound.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'UNFOUND_PRODUCT_KEY',
+      `The given product key is unfound.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
@@ -59,16 +56,19 @@ async function deleteProductKey(req: Request, res: Response, next: NextFunction)
   }
 
   // delete the Product Key
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   await ProductKey.deleteOne({ _id: storedProductKey._id });
-  return res.status(HTTP_STATUS_CODE.OK).send({
-    message: isLinkedToUser
-      ? `SUCCESSFUL_DELETION_OF_PRODUCT_KEY_LINKED_TO_USER_${linkedUser?._id}`
-      : 'SUCCESSFUL_DELETION_OF_PRODUCT_KEY',
+  res.status(HTTP_STATUS_CODE.OK).send({
+    message:
+      isLinkedToUser && linkedUser?._id
+        ? `SUCCESSFUL_DELETION_OF_PRODUCT_KEY_LINKED_TO_USER_${linkedUser?._id.toString()}`
+        : 'SUCCESSFUL_DELETION_OF_PRODUCT_KEY',
   });
 }
 
-async function addProductKeyToUser(req: Request, res: Response, next: NextFunction) {
-  const { userId, productKey } = req.body;
+async function addProductKeyToUser(req: Request, res: Response): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { userId, productKey }: Record<'userId' | 'productKey', string> = req.body;
   const {
     isKeyInvalid,
     isStored,
@@ -81,62 +81,52 @@ async function addProductKeyToUser(req: Request, res: Response, next: NextFuncti
   } = await checkProductKey(productKey);
 
   if (isKeyInvalid) {
-    return next(
-      new HTTPError(
-        'INVALID_FORMAT_FOR_PRODUCT_KEY',
-        `Your product key has an invalid format.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'INVALID_FORMAT_FOR_PRODUCT_KEY',
+      `Your product key has an invalid format.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // send potential errors
   if (error) {
-    return next(
-      new HTTPError(
-        'ERROR_WHEN_CHECK_PRODUCT_KEY',
-        error,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'ERROR_WHEN_CHECK_PRODUCT_KEY',
+      error,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // product key not registered
   if (!isStored || !storedProductKey) {
-    return next(
-      new HTTPError(
-        'UNFOUND_PRODUCT_KEY',
-        `The given product key is unfound.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'UNFOUND_PRODUCT_KEY',
+      `The given product key is unfound.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // product key not usable
   if (!isInUse) {
-    return next(
-      new HTTPError(
-        'PRODUCT_KEY_NOT_LINKED',
-        isInUseMsg || 'This product key is linked to no user',
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'PRODUCT_KEY_NOT_LINKED',
+      isInUseMsg || 'This product key is linked to no user',
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // check if the key is not alreday linked to a user
   if (isLinkedToUser && linkedUser) {
-    if (linkedUser._id !== userId) {
-      return next(
-        new HTTPError(
-          'PRODUCT_KEY_ALREADY_LINKED_TO_ANOTHER_USER',
-          'This product key is linked to another user',
-          HTTP_STATUS_CODE.NOT_IMPLEMENTED,
-          {}
-        )
+    if (linkedUser._id?.toString() !== userId) {
+      throw new HTTPError(
+        'PRODUCT_KEY_ALREADY_LINKED_TO_ANOTHER_USER',
+        'This product key is linked to another user',
+        HTTP_STATUS_CODE.NOT_IMPLEMENTED,
+        {}
       );
     }
     console.info('product key linked to the given user');
@@ -146,17 +136,16 @@ async function addProductKeyToUser(req: Request, res: Response, next: NextFuncti
   const user = await User.findById(userId);
 
   if (!user) {
-    return next(
-      new HTTPError(
-        'UNFOUND_USER',
-        `We couldn't find the user to update.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'UNFOUND_USER',
+      `We couldn't find the user to update.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
-  const formerProductKeyId = user.productKey;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const formerProductKeyId: ObjectId | undefined = user.productKey;
 
   // if former Product Key, deactivate that key
   if (formerProductKeyId) {
@@ -168,51 +157,51 @@ async function addProductKeyToUser(req: Request, res: Response, next: NextFuncti
   }
 
   // attach key to user
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   user.productKey = storedProductKey._id;
   await user.save();
 
   // send response
-  return res.status(HTTP_STATUS_CODE.OK).send({
+  res.status(HTTP_STATUS_CODE.OK).send({
     message: formerProductKeyId ? 'FORMER_PRODUCT_KEY_DEACTIVATED' : 'PRODUCT_KEY_ADDED_TO_USER',
   });
 }
+// seems complicated but it's for maintaining coherency in types
+type InfoFromBody = TypeLikeMutator<
+  { productKey: string } & Pick<IProductKey, 'validityPeriod' | 'activated' | 'activationDate'>
+>;
 
-async function updateProductKey(req: Request, res: Response, next: NextFunction) {
-  const { productKey, validityPeriod, activated, activationDate } = req.body;
+async function updateProductKey(req: Request, res: Response): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { productKey, validityPeriod, activated, activationDate }: InfoFromBody = req.body;
   const { isKeyInvalid, isStored, storedProductKey, errorMsg } = await ProductKey.checkIfStored(
     productKey
   );
 
   if (isKeyInvalid) {
-    return next(
-      new HTTPError(
-        'INVALID_FORMAT_FOR_PRODUCT_KEY',
-        `Your product key has an invalid format.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'INVALID_FORMAT_FOR_PRODUCT_KEY',
+      `Your product key has an invalid format.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   if (errorMsg) {
-    return next(
-      new HTTPError(
-        'ERROR_WHEN_CHECK_IF_PRODUCT_KEY_STORED',
-        errorMsg,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'ERROR_WHEN_CHECK_IF_PRODUCT_KEY_STORED',
+      errorMsg,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   if (!isStored || !storedProductKey) {
-    return next(
-      new HTTPError(
-        'UNFOUND_PRODUCT_KEY',
-        `The given product key is unfound.`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'UNFOUND_PRODUCT_KEY',
+      `The given product key is unfound.`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
@@ -232,91 +221,90 @@ async function updateProductKey(req: Request, res: Response, next: NextFunction)
     await storedProductKey.save();
   }
 
-  return res.status(HTTP_STATUS_CODE.OK).send({
+  res.status(HTTP_STATUS_CODE.OK).send({
     message: 'UPDATED_PRODUCT_KEY',
   });
 }
 
-async function registerProductKey(req: Request, res: Response, next: NextFunction) {
-  const { productKey, validityPeriod, activated, activationDate } = req.body;
+async function registerProductKey(req: Request, res: Response): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { productKey, validityPeriod, activated, activationDate }: InfoFromBody = req.body;
   // --- Check for the product key
   const hasKey = !!productKey;
 
   const { isStored, storedProductKey, errorMsg } = await ProductKey.checkIfStored(productKey);
 
   if (errorMsg) {
-    return next(
-      new HTTPError(
-        'ERROR_WHEN_CHECK_IF_PRODUCT_KEY_STORED',
-        errorMsg,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'ERROR_WHEN_CHECK_IF_PRODUCT_KEY_STORED',
+      errorMsg,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   if (isStored && storedProductKey) {
-    return next(
-      new HTTPError(
-        'EXISTING_PRODUCT_KEY',
-        `REGISTERED_PRODUCT_KEY_ACTIVATED_SINCE_${storedProductKey.activationDate}`,
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'EXISTING_PRODUCT_KEY',
+      `REGISTERED_PRODUCT_KEY_ACTIVATED_SINCE_${storedProductKey.activationDate.toDateString()}`,
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
 
   // new key to add
   const newProductKey = new ProductKey({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     key: productKey,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     activationDate,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     activated,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     validityPeriod,
   });
   await newProductKey.save();
 
-  return res.status(HTTP_STATUS_CODE.OK).send({
+  res.status(HTTP_STATUS_CODE.OK).send({
     message: 'REGISTERED_PRODUCT_KEY',
     productKey: hasKey ? undefined : newProductKey.key,
   });
 }
 
-async function getInfo(req: Request, res: Response, next: NextFunction) {
-  const productKey = await ProductKey.findByKey(req.body.productKey);
+async function getInfo(req: Request, res: Response): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { productKey: retrievedProductKey }: { productKey: string } = req.body;
+  const productKey = await ProductKey.findByKey(retrievedProductKey);
   if (!productKey) {
-    return next(
-      new HTTPError(
-        'UNFOUND_PRODUCT_KEY',
-        "We couldn't retrieve information for the product key",
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'UNFOUND_PRODUCT_KEY',
+      "We couldn't retrieve information for the product key",
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
-  return res.status(HTTP_STATUS_CODE.OK).send({ productKey });
+  res.status(HTTP_STATUS_CODE.OK).send({ productKey });
 }
 
-async function getAllInfo(req: Request, res: Response, next: NextFunction) {
+async function getAllInfo(req: Request, res: Response): Promise<void> {
   const productKeys = await ProductKey.find({});
   if (!productKeys) {
-    return next(
-      new HTTPError(
-        'UNFOUND_PRODUCT_KEYS',
-        "We couldn't retrieve information for any product keys",
-        HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-        {}
-      )
+    throw new HTTPError(
+      'UNFOUND_PRODUCT_KEYS',
+      "We couldn't retrieve information for any product keys",
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+      {}
     );
   }
   console.info(`${productKeys.length} product keys info found`);
-  return res.status(HTTP_STATUS_CODE.OK).send({ productKeys });
+  res.status(HTTP_STATUS_CODE.OK).send({ productKeys });
 }
 
 export default {
-  deleteProductKey: asyncHelper(deleteProductKey),
-  addProductKeyToUser: asyncHelper(addProductKeyToUser),
-  updateProductKey: asyncHelper(updateProductKey),
-  registerProductKey: asyncHelper(registerProductKey),
-  getInfo: asyncHelper(getInfo),
-  getAllInfo: asyncHelper(getAllInfo),
+  deleteProductKey: asyncControllerHelper(deleteProductKey),
+  addProductKeyToUser: asyncControllerHelper(addProductKeyToUser),
+  updateProductKey: asyncControllerHelper(updateProductKey),
+  registerProductKey: asyncControllerHelper(registerProductKey),
+  getInfo: asyncControllerHelper(getInfo),
+  getAllInfo: asyncControllerHelper(getAllInfo),
 };

@@ -5,13 +5,14 @@
   "description": "server side",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint . --ignore-path .eslintignore --ext .js,.ts",
-    "lint:fix": "eslint . --ignore-path .eslintignore --ext .js,.ts --fix",
+    "clean": "rimraf dist",
+    "lint": "eslint . --config .eslintrc.json --ignore-path .eslintignore --ext .js,.ts",
+    "lint:fix": "eslint . --config .eslintrc.json --ignore-path .eslintignore --ext .js,.ts --fix",
     "format:prettier": "prettier --config '../.prettierrc.json' '../**/*.ts' --write",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=development ts-node -r dotenv/config index.ts dotenv_config_path=../.env dotenv_config_debug=true",
-    "start:prod": "npm run build && node -r dotenv/config ./dist/index.js dotenv_config_path=../.env dotenv_config_debug=true",
-    "build": "npx tsc"
+    "start:prod": "npm run build && node -r dotenv/config dist/index.js dotenv_config_path=../.env dotenv_config_debug=true",
+    "build": "npm run clean && tsc"
   },
   "author": "TOH Ninsemou Jordan",
   "license": "MIT",
@@ -23,6 +24,7 @@
     "express": "^4.17.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.0",
+    "rimraf": "^3.0.2",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -44,6 +46,7 @@
     "nodemon": "^2.0.15",
     "prettier": "^2.5.1",
     "ts-node": "^10.6.0",
+    "tslib": "^2.3.1",
     "typescript": "^4.6.2"
   }
 }

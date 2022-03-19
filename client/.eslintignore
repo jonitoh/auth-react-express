@@ -1,0 +1,7 @@
+dist
+node_modules
+public
+temp
+data
+log
+webpack.config.js

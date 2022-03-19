@@ -1,50 +1,41 @@
 {
   "name": "client",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@chakra-ui/icons": "^1.1.1",
-    "@chakra-ui/react": "^1.8.1",
-    "@emotion/react": "^11.7.1",
-    "@emotion/styled": "^11.6.0",
-    "@testing-library/jest-dom": "^5.16.2",
-    "@testing-library/react": "^12.1.2",
-    "@testing-library/user-event": "^13.5.0",
-    "axios": "^0.25.0",
-    "framer-motion": "^5.6.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-icons": "^4.3.1",
-    "react-router-dom": "^6.2.1",
-    "react-scripts": "5.0.0",
-    "web-vitals": "^2.1.4",
-    "zustand": "^3.7.0"
-  },
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "start": "react-scripts start",
-    "dev": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "clean": "rimraf dist",
+    "build": "npm run clean && webpack --env config_path=../.env",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npm run clean && webpack-dev-server --env config_path=../.env",
+    "start:prod": "npm run build",
+    "--lint": "eslint . --config .eslintrc.json --ignore-path .eslintignore --ext .js,.ts",
+    "--lint:fix": "eslint . --config .eslintrc.json --ignore-path .eslintignore --ext .js,.ts --fix",
+    "--format:prettier": "prettier --config '../.prettierrc.json' '../**/*.ts' --write"
   },
+  "keywords": [],
   "author": "TOH Ninsemou Jordan",
   "license": "MIT",
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "devDependencies": {
+    "@babel/core": "^7.17.8",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-react": "^7.16.7",
+    "@types/react": "^17.0.40",
+    "@types/react-dom": "^17.0.13",
+    "babel-loader": "^8.2.3",
+    "dotenv-webpack": "^7.1.0",
+    "html-webpack-plugin": "^5.5.0",
+    "ts-loader": "^9.2.8",
+    "typescript": "^4.6.2",
+    "webpack": "^5.70.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-hot-loader": "^4.13.0",
+    "rimraf": "^3.0.2"
   }
 }

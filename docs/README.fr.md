@@ -28,6 +28,7 @@ README disponible en:
 <br/>
 
 <!-- github badges -->
+
 ![GitHub contributors](https://img.shields.io/github/contributors/jonitoh/auth-react-express)
 ![GitHub repo size](https://img.shields.io/github/repo-size/jonitoh/auth-react-express)
 ![GitHub all releases](https://img.shields.io/github/downloads/jonitoh/auth-react-express/total)
@@ -45,10 +46,15 @@ README disponible en:
 <br/>
 
 ---
+
 ---
+
 <!-- news / quick announcements -->
-### RAS ...
+
+### En pause pour l'instant ...
+
 ---
+
 ---
 
 <!-- summary -->
@@ -57,7 +63,7 @@ README disponible en:
 
 **TABLE OF CONTENT**
 
-[**🌱&nbsp; Quel projet ?**](#philosophy) | [**👨‍💻&nbsp; Tech stack**](#tech) | 
+[**🌱&nbsp; Quel projet ?**](#philosophy) | [**👨‍💻&nbsp; Tech stack**](#tech) |
 [**📖&nbsp; Utilisation**](#usage) |
 [**🎯&nbsp; Fonctionnalités**](#features) |
 [**⚠️&nbsp; Limitations**](#limits) |
@@ -79,11 +85,12 @@ Pour un projet plus complexe, je dois implémenter une procédure d'authentifica
  </a>
 </p>
 
-
 # <a id="tech">👨‍💻&nbsp;</a> Tech stack
 
-- React
+- MongoDB / Mongoose
 - Express
+- React
+- Typescript
 
 <!-- back to top -->
 <p align="right">
@@ -98,13 +105,22 @@ Pour un projet plus complexe, je dois implémenter une procédure d'authentifica
 
 ## 🚀&nbsp; Rapide démarrage
 
-En préparation.
+There is a folder named `server` which concerns the backend using Express.
+The folder named `client` is the frontend implemented in React.
+
+Each folder has a `package.json` file however a global `package.json` can be found at the root to start the application.
+
+Here are some available scripts:
+
+- `npm start`: run the app in the development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- `npm test`: lauch whatever test runner that has been used.
+- `npm run build`: builds the app for production.
 
 ## ⚙️&nbsp; Minimales spécifications
 
-En préparation.
-
-- [Zustand](https://github.com/pmndrs/zustand)
+- [Zustand](https://github.com/pmndrs/zustand) is used for the global state managment ( so easier than redux ).
+- [Chakra UI](https://chakra-ui.com/) is an amazing component library to build beautiful React apps.
+- [Mongoose](https://mongoosejs.com/), the documentation is so good.
 
 ## 👀&nbsp; Exemples
 
@@ -117,15 +133,13 @@ En préparation.
  </a>
 </p>
 
-
 # <a id="features">🎯&nbsp;</a> Fonctionnalités
 
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
-    - [x] 
-    - [x] 
+- [ ]
+- [ ]
+- [ ]
+- [ ] - [x]
+  - [x]
 
 <!-- back to top -->
 <p align="right">
@@ -133,11 +147,12 @@ En préparation.
    <img height="20px" src="assets/up-arrow-svgrepo-com.svg" />
  </a>
 </p>
-
 
 # <a id="limits">⚠️&nbsp;</a> Limitations
 
-En préparation.
+### `npm run build`
+
+I need to check if the build can be minified and the filenames include the hashes.
 
 <!-- back to top -->
 <p align="right">
@@ -145,7 +160,6 @@ En préparation.
    <img height="20px" src="assets/up-arrow-svgrepo-com.svg" />
  </a>
 </p>
-
 
 # <a id="contribs">🤝&nbsp;</a> Contributions
 
@@ -153,10 +167,9 @@ En préparation.
 
 😱 Un bogue ? Une fonctionnalité manquante ?
 
-Pour toute suggestion, "forkez" le répertoire et effectuez un "pull request" ou ouvrez une "issue" avec l'étiquette `enhancement`. 
+Pour toute suggestion, "forkez" le répertoire et effectuez un "pull request" ou ouvrez une "issue" avec l'étiquette `enhancement`.
 
 🤩 N'oubliez pas de partager ce projet et d'y mettre une étoile! Encore merci!
-
 
 <!-- back to the top -->
 <p align="right">
@@ -164,7 +177,6 @@ Pour toute suggestion, "forkez" le répertoire et effectuez un "pull request" ou
    <img height="20px" src="assets/up-arrow-svgrepo-com.svg" />
  </a>
 </p>
-
 
 # <a id="license">📘&nbsp;</a> Licence
 
@@ -177,13 +189,39 @@ La licence de ce projet est [MIT](LICENSE).
  </a>
 </p>
 
-
 # <a id="acknowledgments">❤️&nbsp;</a> Merci à vous !
 
-🏆 Le nom des nominés retenus, sans ordre particulier, dans la catégorie de ***meilleure ressource déterminante pour ce projet***:
+🏆 Le nom des nominés retenus, sans ordre particulier, dans la catégorie de **_meilleure ressource déterminante pour ce projet_**:
 
+### front end
 
-* []()
+- [Créer des formulaires avec Chakra UI](https://blog.logrocket.com/how-to-create-forms-with-chakra-ui-in-react-apps/): article en anglais très détaillé
+
+- [Chakra UI et les thèmes de couleurs](https://dev.to/carwack/the-one-with-chakra-ui-vue-and-color-palette-switching-68e)
+
+- [Les cookies HTTP avec React](https://blog.logrocket.com/how-to-secure-react-app-login-authentication/)
+
+- [usehooks](https://usehooks.com/), un site avec des hooks de reacts intéressants
+
+---
+
+### back end
+
+- [Vidéo Mongoose Crash Course - Débutant à Avancé (en anglais)](https://www.youtube.com/watch?v=DZBGEVgL2eE)
+
+- [Vidéo Tuto Authentification/Refresh JSON Web Token en Nodejs avec Express](https://www.youtube.com/watch?v=GXokEYwbOwA)
+
+- [Clean code for Express app](https://www.codepedia.org/ama/cleaner-code-in-expressjs-rest-api-with-custom-error-handling)
+
+- [Utiliser Mongooose typé](https://ichi.pro/fr/modeles-fortement-types-avec-mongoose-et-typescript-136077299513122)
+
+---
+
+### other
+
+- [Utilisation du fichier jsconfig.json](https://geek-week.imtqy.com/articles/fr493704/index.html)
+
+- [Propriétés imbriquées dans un objet Javascript](https://dev.to/rajnishkatharotiya/select-a-nested-value-from-the-object-in-javascript-2fjd)
 
 <!-- back to the top -->
 <p align="right">
@@ -192,9 +230,9 @@ La licence de ce projet est [MIT](LICENSE).
  </a>
 </p>
 
-# <a id="encore">👀&nbsp;</a> Et sinon ? 
+# <a id="encore">👀&nbsp;</a> Et sinon ?
 
-*An optional section to add one last thing before ending this amazing README.*
+_An optional section to add one last thing before ending this amazing README._
 
 Merci encore pour avoir lu jusqu'au bout ce README!!!
 

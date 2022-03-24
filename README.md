@@ -114,13 +114,13 @@ Here are some available scripts:
 
 - `npm start`: run the app in the development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 - `npm test`: lauch whatever test runner that has been used.
-- `npm run build`: Builds the app for production.
+- `npm run build`: builds the app for production.
 
 ## ⚙️&nbsp; Requirements
 
-In preparation.
-
-- [Zustand](https://github.com/pmndrs/zustand) is used for the global state managment ( so easier than redux )
+- [Zustand](https://github.com/pmndrs/zustand) is used for the global state managment ( so easier than redux ).
+- [Chakra UI](https://chakra-ui.com/) is an amazing component library to build beautiful React apps.
+- [Mongoose](https://mongoosejs.com/), the documentation is so good.
 
 ## 👀&nbsp; Examples
 
@@ -151,12 +151,9 @@ In preparation.
 
 # <a id="limits">⚠️&nbsp;</a> Limitations
 
-In preparation.
-
 ### `npm run build`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+I need to check if the build can be minified and the filenames include the hashes.
 
 <!-- back to top -->
 <p align="right">
@@ -196,52 +193,42 @@ This project is released under the terms of the [MIT License](LICENSE).
 # <a id="acknowledgments">❤️&nbsp;</a> Acknowledgments
 
 🏆 Here are the nominees, with no particular order, in the category for **_best resources used for this project_**:
-front end
 
-- [Chakra UI](https://chakra-ui.com/)
+### front end
+
 - [How to create forms with Chakra UI in React apps](https://blog.logrocket.com/how-to-create-forms-with-chakra-ui-in-react-apps/): very detailed article
 
-- [color mode] (https://dev.to/carwack/the-one-with-chakra-ui-vue-and-color-palette-switching-68e)
+- [Add a Color Mode to a Chakra-based app](https://dev.to/carwack/the-one-with-chakra-ui-vue-and-color-palette-switching-68e)
+
+- [Use of HTTP cookie in React](https://blog.logrocket.com/how-to-secure-react-app-login-authentication/)
+
+- [usehooks](https://usehooks.com/), a useful website of handful react hooks
 
 ---
 
-back end
+### back end
 
-- [jsconfig.json usage](https://saurabhshah23.medium.com/react-app-with-absolute-paths-using-jsconfig-json-2b07b1cb24d4)
+- [Express with example](https://www.freecodecamp.org/news/express-explained-with-examples-installation-routing-middleware-and-more/)
 
-- [Express with example] (https://www.freecodecamp.org/news/express-explained-with-examples-installation-routing-middleware-and-more/)
+- [Example of authentification with Mongo and Express](https://www.bezkoder.com/node-js-mongodb-auth-jwt/)
 
-- [auth mongo express] (https://www.bezkoder.com/node-js-mongodb-auth-jwt/)
+- [Mongoose's style Guide](https://github.com/Zwimber/mongoose-style-guide)
 
-- [mongoose-style-guide] (https://github.com/Zwimber/mongoose-style-guide)
+- [Use of HTTP cookie in Express](https://medium.com/@zahedialfurquan20/using-cookies-to-store-jwt-for-authentication-and-authorization-in-a-mern-stack-app-a58d7a5d6b6e)
 
-- [mongoose doc] (https://mongoosejs.com/): yes read the doc is necessary
+- [Clean code for Express app](https://www.codepedia.org/ama/cleaner-code-in-expressjs-rest-api-with-custom-error-handling)
 
-- [intro mongoose] (https://www.freecodecamp.org/news/introduction-to-mongoose-for-mongodb-d2a7aa593c57/) for those who prefer read a short introduction before dive in the doc
+- [Usage of Mongooose and Typescript 1](https://www.dailydeveloping.com/posts/Use-mongoose-with-typescript)
+- [Usage of Mongooose and Typescript 2](https://medium.com/swlh/using-typescript-with-mongodb-393caf7adfef)
+- [Usage of Mongooose and Typescript 3](https://medium.com/weekly-webtips/make-typescript-and-mongoose-play-nicely-together-3d3c94a91e34)
 
-- [advice with that async ish in mongoose] (https://www.freecodecamp.org/news/mongodb-mongoose-node-tutorial/)
+---
 
-- [potential workaound for async getter] (https://medium.com/trabe/async-getters-and-setters-is-it-possible-c18759b6f7e4)
+### other
 
-- [astuce mongoose] (https://simplernerd.com/mongoose-id-exists/)
+- [Usage of jsconfig.json](https://saurabhshah23.medium.com/react-app-with-absolute-paths-using-jsconfig-json-2b07b1cb24d4)
 
-- [parsing request and express] (https://codewithhugo.com/parse-express-json-form-body/)
-
-- [http only cookie] (https://www.youtube.com/watch?v=894seNhONF8&list=WL&index=11)
-
-- [REACT HTTP COOKIE] (https://blog.logrocket.com/how-to-secure-react-app-login-authentication/)
-
-- [express http cookie] (https://medium.com/@zahedialfurquan20/using-cookies-to-store-jwt-for-authentication-and-authorization-in-a-mern-stack-app-a58d7a5d6b6e)
-
-- [react hooks] (https://usehooks.com/)
-
-- [express clean code] (https://www.codepedia.org/ama/cleaner-code-in-expressjs-rest-api-with-custom-error-handling)
-
-- [nested value object] (https://dev.to/rajnishkatharotiya/select-a-nested-value-from-the-object-in-javascript-2fjd)
-
-- [mongoose with typescript 1](https://www.dailydeveloping.com/posts/Use-mongoose-with-typescript)
-- [mongoose with typescript 2](https://medium.com/swlh/using-typescript-with-mongodb-393caf7adfef)
-- [mongoose with typescript 3](https://medium.com/weekly-webtips/make-typescript-and-mongoose-play-nicely-together-3d3c94a91e34)
+- [Nested value in object](https://dev.to/rajnishkatharotiya/select-a-nested-value-from-the-object-in-javascript-2fjd)
 
 <!-- back to the top -->
 <p align="right">

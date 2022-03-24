@@ -1,4 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const path = require('path');
 
@@ -10,6 +11,7 @@ module.exports = (env) => ({
     open: true,
     hot: true,
   },
+  devtool: 'eval-source-map',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
@@ -40,9 +42,7 @@ module.exports = (env) => ({
     ],
   },
   resolve: {
-    alias: {
-      '@components': path.resolve(__dirname, 'src/components'),
-    },
-    extensions: ['.tsx', '.ts', '.js', '.json'],
+    plugins: [new TsconfigPathsPlugin()],
+    extensions: ['.tsx', '.ts', '.js', '.json', '.css'],
   },
 });

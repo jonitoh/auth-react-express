@@ -51,7 +51,7 @@ README available in:
 
 <!-- news / quick announcements -->
 
-### Nothing for now!
+### Paused for now ...
 
 ---
 
@@ -87,8 +87,10 @@ For a more complex project, I need to implement authentification/authorisation. 
 
 # <a id="tech">👨‍💻&nbsp;</a> Tech stack
 
-- React
+- MongoDB / Mongoose
 - Express
+- React
+- Typescript
 
 <!-- back to top -->
 <p align="right">
@@ -103,13 +105,22 @@ For a more complex project, I need to implement authentification/authorisation. 
 
 ## 🚀&nbsp; Getting started
 
-In preparation.
+There is a folder named `server` which concerns the backend using Express.
+The folder named `client` is the frontend implemented in React.
+
+Each folder has a `package.json` file however a global `package.json` can be found at the root to start the application.
+
+Here are some available scripts:
+
+- `npm start`: run the app in the development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- `npm test`: lauch whatever test runner that has been used.
+- `npm run build`: Builds the app for production.
 
 ## ⚙️&nbsp; Requirements
 
 In preparation.
 
-- [Zustand](https://github.com/pmndrs/zustand)
+- [Zustand](https://github.com/pmndrs/zustand) is used for the global state managment ( so easier than redux )
 
 ## 👀&nbsp; Examples
 
@@ -141,6 +152,11 @@ In preparation.
 # <a id="limits">⚠️&nbsp;</a> Limitations
 
 In preparation.
+
+### `npm run build`
+
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
 <!-- back to top -->
 <p align="right">

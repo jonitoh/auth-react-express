@@ -98,5 +98,5 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   //"include": ["./"],
-  "exclude": ["node_modules", "dist", ".vscode", "docs"]
+  "exclude": ["node_modules", "dist", ".vscode", "docs", "**/**/**.test.js"]
 }

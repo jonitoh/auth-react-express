@@ -7,15 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "clean": "concurrently --kill-others \"cd server && npm run clean\" \"cd client && npm run clean\"",
-    "lint": "concurrently --kill-others \"cd server && npm run lint\" \"cd client && npm run lint\"",
-    "lint:fix": "concurrently --kill-others \"cd server && npm run lint:fix\" \"cd client && npm run lint:fix\"",
-    "format:prettier": "concurrently --kill-others \"cd server && npm run format:prettier\" \"cd client && npm run format:prettier\"",
-    "test": "concurrently --kill-others \"cd server && npm run test\" \"cd client && npm run test\"",
-    "dev": "concurrently --kill-others \"cd server && npm run dev\" \"cd client && npm run dev\"",
-    "start:prod": "concurrently --kill-others \"cd server && npm run start:prod\" \"cd client && npm run start:prod\"",
-    "build": "concurrently --kill-others \"cd server && npm run build\" \"cd client && npm run build\"",
-    "script": "concurrently --kill-others \"cd server && npm run $SCRIPT\" \"cd client && npm run $SCRIPT\""
+    "help": "Available names: clean, lint, lint:fix, format:prettier, test, dev, start:prod, build",
+    "main": "concurrently --kill-others \"cd server && npm run $npm_config_name\" \"cd client && npm run $npm_config_name\""
   },
   "repository": {
     "type": "git",

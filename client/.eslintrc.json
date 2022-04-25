@@ -31,6 +31,7 @@
   },
   "plugins": ["import", "react", "@typescript-eslint"],
   "rules": {
+    "react/jsx-fragments": ["syntax"],
     "react/jsx-no-bind": "off",
     "react/jsx-props-no-spreading": "off",
     // turn on errors for missing imports
